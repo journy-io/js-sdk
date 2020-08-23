@@ -13,7 +13,6 @@ export interface ClientConfig {
   apiUrl: string;
 }
 
-// TODO: Document the client
 export interface Client {
   /**
    * Initialize the Client.
