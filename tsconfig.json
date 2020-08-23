@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "lib": ["es2019", "dom"],
+    "target": "es5",
+    "noImplicitAny": true,
+    "types": [],
+    "outDir": "dist",
+    "rootDirs": ["lib", "test"],
+    "declaration": true
+  },
+  "include": [
+    "lib/**/*.ts"
+  ],
+  "exclude": [
+    "**/node_modules",
+    "**/test/*"
+  ]
+}

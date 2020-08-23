@@ -1,0 +1,328 @@
+import {
+  Client,
+  ClientResponseData,
+  createJournyClient,
+  InitResponse,
+  JourneyClientError,
+  ProfileResponse,
+  TrackingSnippetResponse,
+} from "../lib";
+import nock = require("nock");
+
+describe("createJournyClient", () => {
+  it("fails when the config is invalid", () => {
+    expect(() => createJournyClient({ apiKeySecret: "", apiUrl: "" })).toThrow(
+      Error
+    );
+    expect(() =>
+      createJournyClient({ apiKeySecret: "non-empty-key", apiUrl: "" })
+    ).toThrow(Error);
+    expect(() =>
+      createJournyClient({ apiKeySecret: "", apiUrl: "non-empty-url" })
+    ).toThrow(Error);
+  });
+  it("creates a journy client", () => {
+    const client = createJournyClient({
+      apiKeySecret: "key-secret",
+      apiUrl: "https://api.test.com",
+    });
+    expect(client).toBeDefined();
+  });
+});
+
+describe("JournyClient", () => {
+  let client1: Client;
+  let client2: Client;
+  let client3: Client;
+  it("creates journy clients", async () => {
+    client1 = await createJournyClient({
+      apiKeySecret: "key-secret",
+      apiUrl: "https://api.test.com",
+    });
+    client2 = await createJournyClient({
+      apiKeySecret: "non-existing-secret",
+      apiUrl: "https://api.test.com",
+    });
+    client3 = await createJournyClient({
+      apiKeySecret: "key-secret",
+      apiUrl: "https://wrong.api.test.com",
+    });
+  });
+  describe("init", () => {
+    it("correctly errors when too many requests were made", async () => {
+      nock("https://api.test.com")
+        .get("/validate")
+        .matchHeader("x-api-key", "key-secret")
+        .reply(
+          429,
+          {
+            status: "429: Too many requests",
+            message: "Too many requests were made to the API.",
+          },
+          { "X-RateLimit-Remaining": "0" }
+        );
+      const response: ClientResponseData<InitResponse> = await client1.init();
+      expect(response).toBeDefined();
+      expect(response.success).toBeFalsy();
+      expect(response.callsRemaining).toEqual(0);
+      expect(response.error).toEqual(JourneyClientError.TooManyRequests);
+      expect(response.data).toBeUndefined();
+    });
+    it("correctly perseveres an unknown error", async () => {
+      nock("https://api.test.com")
+        .get("/validate")
+        .matchHeader("x-api-key", "key-secret")
+        .reply(
+          444,
+          {
+            status: "444: Unknown error",
+            message: "This error is not known.",
+          },
+          { "X-RateLimit-Remaining": "5000" }
+        );
+      const response: ClientResponseData<InitResponse> = await client1.init();
+      expect(response).toBeDefined();
+      expect(response.success).toBeFalsy();
+      expect(response.callsRemaining).toEqual(5000);
+      expect(response.error).toEqual(JourneyClientError.UnknownError);
+      expect(response.data).toBeUndefined();
+    });
+    it("correctly perseveres a server error", async () => {
+      nock("https://api.test.com")
+        .get("/validate")
+        .matchHeader("x-api-key", "key-secret")
+        .reply(
+          500,
+          {
+            status: "500: Server error",
+            message: "This error is from the server.",
+          },
+          { "X-RateLimit-Remaining": "5000" }
+        );
+      const response: ClientResponseData<InitResponse> = await client1.init();
+      expect(response).toBeDefined();
+      expect(response.success).toBeFalsy();
+      expect(response.callsRemaining).toEqual(5000);
+      expect(response.error).toEqual(JourneyClientError.ServerError);
+      expect(response.data).toBeUndefined();
+    });
+    it("should correctly initialize", async () => {
+      nock("https://api.test.com")
+        .get("/validate")
+        .matchHeader("x-api-key", "key-secret")
+        .reply(
+          200,
+          {
+            permissions: ["TrackData", "GetTrackingSnippet", "ReadUserProfile"],
+            propertyGroupName: "test",
+          },
+          { "X-RateLimit-Remaining": "5000" }
+        );
+      nock("https://api.test.com")
+        .get("/validate")
+        .matchHeader("x-api-key", "non-existing-secret")
+        .reply(
+          404,
+          {
+            message: "404: Not found",
+          },
+          { "X-RateLimit-Remaining": "5000" }
+        );
+
+      const response: ClientResponseData<InitResponse> = await client1.init();
+      expect(response).toBeDefined();
+      expect(response.success).toBeTruthy();
+      expect(response.callsRemaining).toEqual(5000);
+      expect(response.error).toBeUndefined();
+      expect(response.data.permissions).toEqual([
+        "TrackData",
+        "GetTrackingSnippet",
+        "ReadUserProfile",
+      ]);
+      expect(response.data.propertyGroupName).toEqual("test");
+
+      const response2: ClientResponseData<InitResponse> = await client2.init();
+      expect(response2).toBeDefined();
+      expect(response2.success).toBeFalsy();
+      expect(response2.callsRemaining).toEqual(5000);
+      expect(response2.error).toEqual(JourneyClientError.NotFoundError);
+      expect(response2.data).toBeUndefined();
+
+      const response3: ClientResponseData<InitResponse> = await client3.init();
+      expect(response3).toBeDefined();
+      expect(response3.success).toBeFalsy();
+      expect(response3.error).toEqual(JourneyClientError.UnknownError);
+      expect(response3.callsRemaining).toBeUndefined();
+      expect(response3.data).toBeUndefined();
+    });
+    it("throws an error when trying to initialize a second time", async () => {
+      await expect(client1.init()).rejects.toThrow(Error);
+    });
+  });
+  describe("trackEvent", () => {
+    // TODO: Write tests when using queue
+    it("correctly throws error because the client was not yet initialized", async () => {
+      await expect(
+        client3.trackEvent({
+          email: "test@journy.io",
+          tag: "tag",
+          campaign: "campaign",
+          source: "source",
+        })
+      ).rejects.toThrow(Error);
+    });
+  });
+  describe("trackProperties", () => {
+    // TODO: Write tests when using queue
+    it("correctly throws error because the client was not yet initialized", async () => {
+      await expect(
+        client3.trackProperties({
+          email: "test@journy.io",
+          journeyProperties: {
+            likesDogs: true,
+          },
+        })
+      ).rejects.toThrow(Error);
+    });
+  });
+  describe("getProfile", () => {
+    it("correctly returns a profile", async () => {
+      const profile = {
+        id: "1",
+        engagementScore: 0,
+        emailAddress: "test@journy.io",
+        devices: [],
+        touchpoints: [],
+      };
+      nock("https://api.test.com")
+        .get("/journeys/profiles")
+        .query({ email: "test@journy.io" })
+        .matchHeader("x-api-key", "key-secret")
+        .reply(200, profile, { "X-RateLimit-Remaining": "1234" });
+      const response: ClientResponseData<ProfileResponse> = await client1.getProfile(
+        { email: "test@journy.io" }
+      );
+      expect(response).toBeDefined();
+      expect(response.success).toBeTruthy();
+      expect(response.callsRemaining).toEqual(1234);
+      expect(response.error).toBeUndefined();
+      expect(response.data).toBeDefined();
+      expect(response.data.email).toEqual("test@journy.io");
+      expect(response.data.profile).toEqual(profile);
+    });
+    it("correctly fails with incorrect arguments", async () => {
+      const bad = {
+        status: "400: Bad Request",
+        message:
+          "Some fields/ parameters were filled in incorrectly or were missing.",
+        errors: {
+          parameters: {
+            query: {
+              email:
+                "The parameter email's type and/ or format is incorrect. Expected type: string, expected format (if not undefined): email",
+            },
+          },
+        },
+      };
+      nock("https://api.test.com")
+        .get("/journeys/profiles")
+        .matchHeader("x-api-key", "key-secret")
+        .query({ email: "" })
+        .reply(400, bad, { "X-RateLimit-Remaining": "5000" });
+      const response: ClientResponseData<ProfileResponse> = await client1.getProfile(
+        { email: "" }
+      );
+      expect(response).toBeDefined();
+      expect(response.success).toBeFalsy();
+      expect(response.callsRemaining).toEqual(5000);
+      expect(response.error).toEqual(JourneyClientError.BadArgumentsError);
+      expect(response.data).toBeUndefined();
+    });
+    it("correctly fails when not authorized", async () => {
+      const bad = {
+        status: "401: Unauthorized",
+        message:
+          "You are not authorized to access the '/journeys/profiles' endpoint.",
+      };
+      nock("https://api.test.com")
+        .get("/journeys/profiles")
+        .matchHeader("x-api-key", "key-secret")
+        .query({ email: "" })
+        .reply(401, bad, { "X-RateLimit-Remaining": "5000" });
+      const response: ClientResponseData<ProfileResponse> = await client1.getProfile(
+        { email: "" }
+      );
+      expect(response).toBeDefined();
+      expect(response.success).toBeFalsy();
+      expect(response.callsRemaining).toEqual(5000);
+      expect(response.error).toEqual(JourneyClientError.UnauthorizedError);
+      expect(response.data).toBeUndefined();
+    });
+    it("correctly throws error because the client was not yet initialized", async () => {
+      await expect(
+        client3.getProfile({
+          email: "test@journy.io",
+        })
+      ).rejects.toThrow(Error);
+    });
+  });
+  describe("getTrackingSnippet", () => {
+    it("correctly returns an existing snippet", async () => {
+      nock("https://api.test.com")
+        .get("/tracking/snippet")
+        .query({ domain: "journy.io" })
+        .matchHeader("x-api-key", "key-secret")
+        .reply(
+          200,
+          {
+            domain: "journy.io",
+            snippet: "<script>snippet</script>",
+          },
+          { "X-RateLimit-Remaining": "5000" }
+        );
+
+      const response: ClientResponseData<TrackingSnippetResponse> = await client1.getTrackingSnippet(
+        {
+          domain: "journy.io",
+        }
+      );
+      expect(response).toBeDefined();
+      expect(response.success).toBeTruthy();
+      expect(response.callsRemaining).toEqual(5000);
+      expect(response.data.domain).toEqual("journy.io");
+      expect(response.data.snippet).toBeDefined();
+    });
+    it("correctly notifies a domain not being found", async () => {
+      nock("https://api.test.com")
+        .get("/tracking/snippet")
+        .query({ domain: "nonexisting.com" })
+        .matchHeader("x-api-key", "key-secret")
+        .reply(
+          404,
+          {
+            status: "404: Not Found",
+            message: "The domain 'nonexisting.com' could not be found.",
+          },
+          { "X-RateLimit-Remaining": "5000" }
+        );
+
+      const response: ClientResponseData<TrackingSnippetResponse> = await client1.getTrackingSnippet(
+        {
+          domain: "nonexisting.com",
+        }
+      );
+      expect(response).toBeDefined();
+      expect(response.success).toBeFalsy();
+      expect(response.callsRemaining).toEqual(5000);
+      expect(response.error).toEqual(JourneyClientError.NotFoundError);
+      expect(response.data).toBeUndefined();
+    });
+    it("correctly throws error because the client was not yet initialized", async () => {
+      await expect(
+        client3.getTrackingSnippet({
+          domain: "nonexisting.com",
+        })
+      ).rejects.toThrow(Error);
+    });
+  });
+});
