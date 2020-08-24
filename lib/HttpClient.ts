@@ -111,7 +111,6 @@ export class HttpClientAxios implements HttpClient {
         transformResponse: (data) => data,
       });
     } catch (error) {
-      console.error(error);
       if (error.response) {
         throw new HttpRequestError(
           `${request.getMethod()} HTTP request to ${request
