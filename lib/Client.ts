@@ -151,7 +151,7 @@ class JournyClient implements Client {
       this.createURL(`/journeys/events`),
       "POST",
       new HttpHeaders(),
-      JSON.stringify(args)
+      args
     );
     try {
       const response = await this.httpClient.send(request);
@@ -174,7 +174,7 @@ class JournyClient implements Client {
       this.createURL(`/journeys/properties`),
       "POST",
       new HttpHeaders(),
-      JSON.stringify(args)
+      args
     );
     try {
       const response = await this.httpClient.send(request);

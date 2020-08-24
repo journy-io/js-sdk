@@ -28,7 +28,7 @@ export class HttpRequest {
     private readonly url: URL,
     private readonly method: Method = "GET",
     private readonly headers: HttpHeaders = new HttpHeaders(),
-    private readonly body: string = ""
+    private readonly body: any = ""
   ) {}
 
   getHeaders() {
@@ -111,6 +111,7 @@ export class HttpClientAxios implements HttpClient {
         transformResponse: (data) => data,
       });
     } catch (error) {
+      console.error(error);
       if (error.response) {
         throw new HttpRequestError(
           `${request.getMethod()} HTTP request to ${request

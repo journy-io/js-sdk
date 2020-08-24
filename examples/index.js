@@ -1,4 +1,7 @@
 const journy = require("@journy/sdk");
+const path = require("path");
+
+require("dotenv").config({ path: path.resolve(__dirname, "./.env") });
 
 const config = {
   apiKeySecret: process.env.API_KEY,
@@ -11,14 +14,18 @@ async function doExample() {
   if (!initialisation.success) {
     console.error("Initialisation failed");
   }
-  const trackPropertiesResponse = await client.trackEvent({
+  const trackEventResponse = await client.trackEvent({
     email: "test@journy.io",
     tag: "tag",
     campaign: "campaign",
     source: "source",
   });
-  if (!trackPropertiesResponse.success) {
-    console.error(trackPropertiesResponse.error);
+  if (!trackEventResponse.success) {
+    console.error(trackEventResponse.error);
+  } else {
+    console.log(
+      `trackEventResponse succeeded with '${trackEventResponse.callsRemaining}' remaining calls`
+    );
   }
 }
 
