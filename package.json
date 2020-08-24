@@ -41,7 +41,8 @@
   "dependencies": {
     "@types/luxon": "^1.24.3",
     "axios": "^0.20.0",
-    "luxon": "^1.24.1"
+    "luxon": "^1.24.1",
+    "p-queue": "^6.6.1"
   },
   "devDependencies": {
     "@types/jest": "^26.0.10",

@@ -160,7 +160,71 @@ describe("JournyClient", () => {
     });
   });
   describe("trackEvent", () => {
-    // TODO: Write tests when using queue
+    it("correctly tracks an event", async () => {
+      nock("https://api.test.com")
+        .post("/journeys/events", {
+          email: "test@journy.io",
+          tag: "tag",
+          campaign: "campaign",
+          source: "source",
+        })
+        .matchHeader("x-api-key", "key-secret")
+        .reply(
+          200,
+          {
+            status: "201: Created",
+            message: "The event was succesfully tracked.",
+          },
+          { "X-RateLimit-Remaining": "5000" }
+        );
+
+      const response = await client1.trackEvent({
+        email: "test@journy.io",
+        tag: "tag",
+        campaign: "campaign",
+        source: "source",
+      });
+      expect(response).toBeDefined();
+      expect(response.success).toBeTruthy();
+      expect(response.callsRemaining).toEqual(5000);
+      expect(response.error).toBeUndefined();
+    });
+    it("correctly states when the input is invalid", async () => {
+      nock("https://api.test.com")
+        .post("/journeys/events", {
+          email: "notAnEmail",
+          tag: "tag",
+          campaign: "campaign",
+          source: "source",
+        })
+        .matchHeader("x-api-key", "key-secret")
+        .reply(
+          400,
+          {
+            status: "400: Bad Request",
+            message:
+              "Some fields/ parameters were filled in incorrectly or were missing.",
+            errors: {
+              fields: {
+                email:
+                  "The field email's type and/ or format is incorrect. Expected type: string, expected format (if not undefined): email",
+              },
+            },
+          },
+          { "X-RateLimit-Remaining": "5000" }
+        );
+      const response1 = await client1.trackEvent({
+        email: "notAnEmail",
+        tag: "tag",
+        campaign: "campaign",
+        source: "source",
+      });
+      expect(response1).toBeDefined();
+      expect(response1.success).toBeFalsy();
+      expect(response1.callsRemaining).toEqual(5000);
+      expect(response1.error).toBeDefined();
+      expect(response1.error).toEqual(JourneyClientError.BadArgumentsError);
+    });
     it("correctly throws error because the client was not yet initialized", async () => {
       await expect(
         client3.trackEvent({
@@ -173,7 +237,68 @@ describe("JournyClient", () => {
     });
   });
   describe("trackProperties", () => {
-    // TODO: Write tests when using queue
+    it("correctly tracks properties", async () => {
+      nock("https://api.test.com")
+        .post("/journeys/properties", {
+          email: "test@journy.io",
+          journeyProperties: {
+            likesDogs: true,
+          },
+        })
+        .matchHeader("x-api-key", "key-secret")
+        .reply(
+          201,
+          {
+            status: "201: Created",
+            message: "The properties were succesfully tracked.",
+          },
+          { "X-RateLimit-Remaining": "5000" }
+        );
+
+      const response = await client1.trackProperties({
+        email: "test@journy.io",
+        journeyProperties: {
+          likesDogs: true,
+        },
+      });
+      expect(response).toBeDefined();
+      expect(response.error).toBeUndefined();
+      expect(response.success).toBeTruthy();
+      expect(response.callsRemaining).toEqual(5000);
+      expect(response.error).toBeUndefined();
+    });
+    it("correctly shows when the input parameters are invalid", async () => {
+      nock("https://api.test.com")
+        .post("/journeys/properties", {
+          email: "test@journy.io",
+          journeyProperties: undefined,
+        })
+        .matchHeader("x-api-key", "key-secret")
+        .reply(
+          400,
+          {
+            status: "400: Bad Request",
+            message:
+              "Some fields/ parameters were filled in incorrectly or were missing.",
+            errors: {
+              fields: {
+                journeyProperties: "The 'journeyProperties' field is required.",
+              },
+            },
+          },
+          { "X-RateLimit-Remaining": "5000" }
+        );
+
+      const response1 = await client1.trackProperties({
+        email: "test@journy.io",
+        journeyProperties: undefined,
+      });
+      expect(response1).toBeDefined();
+      expect(response1.success).toBeFalsy();
+      expect(response1.callsRemaining).toEqual(5000);
+      expect(response1.error).toBeDefined();
+      expect(response1.error).toEqual(JourneyClientError.BadArgumentsError);
+    });
     it("correctly throws error because the client was not yet initialized", async () => {
       await expect(
         client3.trackProperties({

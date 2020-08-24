@@ -1,5 +1,6 @@
 import { AxiosInstance } from "axios";
 import { Duration } from "luxon";
+import PQueue from "p-queue";
 
 type Method = "GET" | "POST" | "DELETE" | "PUT" | "HEAD";
 
@@ -157,6 +158,17 @@ export class HttpClientApi implements HttpClient {
         request.getBody()
       )
     );
+  }
+}
+
+export class QueuedHttpClient implements HttpClient {
+  constructor(
+    private readonly client: HttpClient,
+    private readonly queue: PQueue
+  ) {}
+
+  async send(request: HttpRequest): Promise<HttpResponse> {
+    return await this.queue.add(async () => await this.client.send(request));
   }
 }
 
