@@ -3,7 +3,6 @@ import {
   HttpHeaders,
   HttpRequest,
   HttpRequestError,
-  QueuedHttpClient,
 } from "./HttpClient";
 import { Config } from "./Config";
 import { Profile } from "./models/Profile";
@@ -86,7 +85,6 @@ function validateClientConfig(clientConfig: ClientConfig) {
 
 class JournyClient implements Client {
   private readonly httpClient: HttpClient;
-  private readonly queuedHttpClient: HttpClient;
   private initialized: boolean = false;
 
   constructor(
@@ -94,7 +92,6 @@ class JournyClient implements Client {
     private readonly clientConfig: ClientConfig
   ) {
     this.httpClient = this.config.getHttpClient();
-    this.queuedHttpClient = this.config.getQueuedHttpClient();
   }
 
   private createURL(path: string) {
@@ -156,7 +153,7 @@ class JournyClient implements Client {
       args
     );
     try {
-      const response = await this.queuedHttpClient.send(request);
+      const response = await this.httpClient.send(request);
       return {
         success: true,
         callsRemaining: parseInt(
@@ -179,7 +176,7 @@ class JournyClient implements Client {
       args
     );
     try {
-      const response = await this.queuedHttpClient.send(request);
+      const response = await this.httpClient.send(request);
       return {
         success: true,
         callsRemaining: parseInt(

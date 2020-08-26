@@ -161,17 +161,6 @@ export class HttpClientApi implements HttpClient {
   }
 }
 
-export class QueuedHttpClient implements HttpClient {
-  constructor(
-    private readonly client: HttpClient,
-    private readonly queue: PQueue
-  ) {}
-
-  async send(request: HttpRequest): Promise<HttpResponse> {
-    return await this.queue.add(async () => await this.client.send(request));
-  }
-}
-
 export class HttpClientThatThrows implements HttpClient {
   async send(_: HttpRequest): Promise<HttpResponse> {
     throw new Error("HttpClientThatThrows");
