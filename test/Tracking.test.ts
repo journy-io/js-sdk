@@ -26,7 +26,7 @@ describe("JournyTracking", () => {
     await client.init();
     tracking = new JournyTracking(client, new Config("key-secret"));
   });
-  describe("trackEvent", async () => {
+  describe("trackEvent", () => {
     it("correctly tracks an event", async () => {
       nock("https://api.test.com")
         .post("/journeys/events", {
@@ -53,7 +53,7 @@ describe("JournyTracking", () => {
       });
     });
   });
-  describe("trackProperties", async () => {
+  describe("trackProperties", () => {
     it("correctly tracks properties", async () => {
       nock("https://api.test.com")
         .post("/journeys/properties", {

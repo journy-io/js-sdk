@@ -284,7 +284,6 @@ function statusCodeToError(status: number): JournyClientError {
   }
 }
 
-// TODO: Is value type any?
 type Properties = { [key: string]: any };
 
 export interface ClientResponse {

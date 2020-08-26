@@ -6,7 +6,7 @@
     "noImplicitAny": true,
     "types": [],
     "outDir": "dist",
-    "rootDirs": ["lib", "test"],
+    "rootDir": "lib",
     "declaration": true
   },
   "include": [
