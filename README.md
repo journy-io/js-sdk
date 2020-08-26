@@ -157,11 +157,11 @@ interface ClientResponseData<T> extends ClientResponse {
 
 which also includes a data field. When an error occurs (and the method call is thus unsuccessful) the data field will be undefined.
 
-### API
+## 📬 API
 
 More documentation and information about the [journy.io](https://journy.io) API can be found on [readme.com](https://journy-io.readme.io/docs).
 
-### Tests
+## 💯 Tests
 
 Tests can be found in the `/tests`-folder. To run the tests run:
 
@@ -169,10 +169,10 @@ Tests can be found in the `/tests`-folder. To run the tests run:
 yarn test
 ```
 
-### Examples
+## 📄 Examples
 
 Examples can be found in the `/examples`-folder.
 
-### Questions/ problems?
+## ❓ Questions/ problems?
 
 In case of problems, or if you have any questions about the SDK. Do not hesitate to create an issue.
