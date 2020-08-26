@@ -2,7 +2,7 @@
 
 This is the Node.js SDK for [journy.io](https://journy.io).
 
-## 💾  Installation
+## 💾 Installation
 
 You can use your package manager (`npm` or `yarn`) to install the SDK. Therefore run:
 
@@ -15,7 +15,6 @@ yarn add @journy-io/sdk
 ```
 
 ## 🔌 Getting started
-
 
 ### Import
 
@@ -131,7 +130,15 @@ interface args {
 }
 ```
 
-The response of the method-call will include the tracking snippet
+#### getTracker
+
+```typescript
+getTracker();
+```
+
+This method will create and return an instance of the `Tracker` class, that can be used to track data without any return type. Internally the `Tracker`-class uses a queue.
+
+The tracker-class has two methods: `trackProperties(args)` and `trackEvent(args)` which uses the same arguments as the `Client`, but have a `void` return type. 
 
 ### Response types
 
