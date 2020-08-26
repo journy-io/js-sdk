@@ -3,11 +3,11 @@ import {
   HttpHeaders,
   HttpRequest,
   HttpRequestError,
-  QueuedHttpClient,
 } from "./HttpClient";
 import { Config } from "./Config";
 import { Profile } from "./models/Profile";
 import { DateTime } from "luxon";
+import { JournyTracking, Tracking } from "./Tracking";
 
 export interface ClientConfig {
   apiKeySecret: string;
@@ -62,6 +62,14 @@ export interface Client {
   getTrackingSnippet(
     args: GetTrackingSnippetArguments
   ): Promise<ClientResponseData<TrackingSnippetResponse>>;
+
+  /**
+   * Get a Tracking object.
+   * @returns A Tracking object, that can perform queued tracking of
+   * users events and properties.
+   * @throws Error if the Client was not yet initialized.
+   */
+  getTracking(): Tracking;
 }
 
 /**
@@ -86,7 +94,6 @@ function validateClientConfig(clientConfig: ClientConfig) {
 
 class JournyClient implements Client {
   private readonly httpClient: HttpClient;
-  private readonly queuedHttpClient: HttpClient;
   private initialized: boolean = false;
 
   constructor(
@@ -94,7 +101,6 @@ class JournyClient implements Client {
     private readonly clientConfig: ClientConfig
   ) {
     this.httpClient = this.config.getHttpClient();
-    this.queuedHttpClient = this.config.getQueuedHttpClient();
   }
 
   private createURL(path: string) {
@@ -113,7 +119,7 @@ class JournyClient implements Client {
     }
     return {
       success: false,
-      error: JourneyClientError.UnknownError,
+      error: JournyClientError.UnknownError,
       callsRemaining: undefined,
     };
   }
@@ -156,7 +162,7 @@ class JournyClient implements Client {
       args
     );
     try {
-      const response = await this.queuedHttpClient.send(request);
+      const response = await this.httpClient.send(request);
       return {
         success: true,
         callsRemaining: parseInt(
@@ -179,7 +185,7 @@ class JournyClient implements Client {
       args
     );
     try {
-      const response = await this.queuedHttpClient.send(request);
+      const response = await this.httpClient.send(request);
       return {
         success: true,
         callsRemaining: parseInt(
@@ -245,9 +251,14 @@ class JournyClient implements Client {
       return JournyClient.handleError(error);
     }
   }
+
+  getTracking(): Tracking {
+    this.assertInitialized();
+    return new JournyTracking(this, this.config);
+  }
 }
 
-export enum JourneyClientError {
+export enum JournyClientError {
   ServerError = "ServerError",
   UnauthorizedError = "UnauthorizedError",
   BadArgumentsError = "BadArgumentsError",
@@ -256,20 +267,20 @@ export enum JourneyClientError {
   UnknownError = "UnknownError",
 }
 
-function statusCodeToError(status: number): JourneyClientError {
+function statusCodeToError(status: number): JournyClientError {
   switch (status) {
     case 401:
-      return JourneyClientError.UnauthorizedError;
+      return JournyClientError.UnauthorizedError;
     case 400:
-      return JourneyClientError.BadArgumentsError;
+      return JournyClientError.BadArgumentsError;
     case 429:
-      return JourneyClientError.TooManyRequests;
+      return JournyClientError.TooManyRequests;
     case 404:
-      return JourneyClientError.NotFoundError;
+      return JournyClientError.NotFoundError;
     case 500:
-      return JourneyClientError.ServerError;
+      return JournyClientError.ServerError;
     default:
-      return JourneyClientError.UnknownError;
+      return JournyClientError.UnknownError;
   }
 }
 
@@ -279,7 +290,7 @@ type Properties = { [key: string]: any };
 export interface ClientResponse {
   success: boolean;
   callsRemaining: number | undefined;
-  error?: JourneyClientError;
+  error?: JournyClientError;
 }
 
 export interface ClientResponseData<T> extends ClientResponse {

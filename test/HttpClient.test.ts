@@ -31,6 +31,28 @@ describe("HttpHeaders", () => {
   });
 });
 
+describe("HttpClientApi", () => {
+  it("works", async () => {
+    nock("https://journy.io")
+      .matchHeader("x-api-key", "api-key-secret")
+      .get("/")
+      .reply(200);
+
+    const instance = axios.create();
+    delete instance.defaults.headers.common;
+    const axiosClient = new HttpClientAxios(
+      axios,
+      Duration.fromObject({ seconds: 5 })
+    );
+
+    const client = new HttpClientApi("api-key-secret", axiosClient);
+    const response = await client.send(
+      new HttpRequest(new URL("https://journy.io/"))
+    );
+    expect(response.getStatusCode()).toEqual(200);
+  });
+});
+
 describe("HttpResponse", () => {
   it("works", () => {
     const response = new HttpResponse(

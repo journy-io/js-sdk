@@ -1,9 +1,4 @@
-import {
-  HttpClient,
-  HttpClientApi,
-  HttpClientAxios,
-  QueuedHttpClient,
-} from "./HttpClient";
+import { HttpClient, HttpClientApi, HttpClientAxios } from "./HttpClient";
 import axios from "axios";
 import { Duration } from "luxon";
 import PQueue from "p-queue";
@@ -24,17 +19,7 @@ export class Config {
     );
   }
 
-  getQueuedHttpClient(
-    timeout: Duration = Duration.fromObject({ seconds: 5 })
-  ): HttpClient {
-    const instance = axios.create();
-    delete instance.defaults.headers.common;
-
-    const httpApi = new HttpClientApi(
-      this.apiKeySecret,
-      new HttpClientAxios(instance, timeout)
-    );
-    const pQueue = new PQueue({ queueClass: FifoQueue });
-    return new QueuedHttpClient(httpApi, pQueue);
+  getPQueue(): PQueue {
+    return new PQueue({ queueClass: FifoQueue });
   }
 }

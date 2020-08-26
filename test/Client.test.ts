@@ -3,11 +3,12 @@ import {
   ClientResponseData,
   createJournyClient,
   InitResponse,
-  JourneyClientError,
+  JournyClientError,
   ProfileResponse,
   TrackingSnippetResponse,
 } from "../lib";
 import nock = require("nock");
+import { JournyTracking } from "../lib/Tracking";
 
 describe("createJournyClient", () => {
   it("fails when the config is invalid", () => {
@@ -65,7 +66,7 @@ describe("JournyClient", () => {
       expect(response).toBeDefined();
       expect(response.success).toBeFalsy();
       expect(response.callsRemaining).toEqual(0);
-      expect(response.error).toEqual(JourneyClientError.TooManyRequests);
+      expect(response.error).toEqual(JournyClientError.TooManyRequests);
       expect(response.data).toBeUndefined();
     });
     it("correctly perseveres an unknown error", async () => {
@@ -84,7 +85,7 @@ describe("JournyClient", () => {
       expect(response).toBeDefined();
       expect(response.success).toBeFalsy();
       expect(response.callsRemaining).toEqual(5000);
-      expect(response.error).toEqual(JourneyClientError.UnknownError);
+      expect(response.error).toEqual(JournyClientError.UnknownError);
       expect(response.data).toBeUndefined();
     });
     it("correctly perseveres a server error", async () => {
@@ -103,7 +104,7 @@ describe("JournyClient", () => {
       expect(response).toBeDefined();
       expect(response.success).toBeFalsy();
       expect(response.callsRemaining).toEqual(5000);
-      expect(response.error).toEqual(JourneyClientError.ServerError);
+      expect(response.error).toEqual(JournyClientError.ServerError);
       expect(response.data).toBeUndefined();
     });
     it("should correctly initialize", async () => {
@@ -145,13 +146,13 @@ describe("JournyClient", () => {
       expect(response2).toBeDefined();
       expect(response2.success).toBeFalsy();
       expect(response2.callsRemaining).toEqual(5000);
-      expect(response2.error).toEqual(JourneyClientError.NotFoundError);
+      expect(response2.error).toEqual(JournyClientError.NotFoundError);
       expect(response2.data).toBeUndefined();
 
       const response3: ClientResponseData<InitResponse> = await client3.init();
       expect(response3).toBeDefined();
       expect(response3.success).toBeFalsy();
-      expect(response3.error).toEqual(JourneyClientError.UnknownError);
+      expect(response3.error).toEqual(JournyClientError.UnknownError);
       expect(response3.callsRemaining).toBeUndefined();
       expect(response3.data).toBeUndefined();
     });
@@ -223,7 +224,7 @@ describe("JournyClient", () => {
       expect(response1.success).toBeFalsy();
       expect(response1.callsRemaining).toEqual(5000);
       expect(response1.error).toBeDefined();
-      expect(response1.error).toEqual(JourneyClientError.BadArgumentsError);
+      expect(response1.error).toEqual(JournyClientError.BadArgumentsError);
     });
     it("correctly throws error because the client was not yet initialized", async () => {
       await expect(
@@ -297,7 +298,7 @@ describe("JournyClient", () => {
       expect(response1.success).toBeFalsy();
       expect(response1.callsRemaining).toEqual(5000);
       expect(response1.error).toBeDefined();
-      expect(response1.error).toEqual(JourneyClientError.BadArgumentsError);
+      expect(response1.error).toEqual(JournyClientError.BadArgumentsError);
     });
     it("correctly throws error because the client was not yet initialized", async () => {
       await expect(
@@ -360,7 +361,7 @@ describe("JournyClient", () => {
       expect(response).toBeDefined();
       expect(response.success).toBeFalsy();
       expect(response.callsRemaining).toEqual(5000);
-      expect(response.error).toEqual(JourneyClientError.BadArgumentsError);
+      expect(response.error).toEqual(JournyClientError.BadArgumentsError);
       expect(response.data).toBeUndefined();
     });
     it("correctly fails when not authorized", async () => {
@@ -380,7 +381,7 @@ describe("JournyClient", () => {
       expect(response).toBeDefined();
       expect(response.success).toBeFalsy();
       expect(response.callsRemaining).toEqual(5000);
-      expect(response.error).toEqual(JourneyClientError.UnauthorizedError);
+      expect(response.error).toEqual(JournyClientError.UnauthorizedError);
       expect(response.data).toBeUndefined();
     });
     it("correctly throws error because the client was not yet initialized", async () => {
@@ -439,7 +440,7 @@ describe("JournyClient", () => {
       expect(response).toBeDefined();
       expect(response.success).toBeFalsy();
       expect(response.callsRemaining).toEqual(5000);
-      expect(response.error).toEqual(JourneyClientError.NotFoundError);
+      expect(response.error).toEqual(JournyClientError.NotFoundError);
       expect(response.data).toBeUndefined();
     });
     it("correctly throws error because the client was not yet initialized", async () => {
@@ -448,6 +449,16 @@ describe("JournyClient", () => {
           domain: "nonexisting.com",
         })
       ).rejects.toThrow(Error);
+    });
+  });
+  describe("getTracking", () => {
+    it("correctly returns a tracking object", () => {
+      const tracking = client1.getTracking();
+      expect(tracking).toBeDefined();
+      expect(tracking).toBeInstanceOf(JournyTracking);
+    });
+    it("correctly throws error because the client was not yet initialized", async () => {
+      expect(() => client3.getTracking()).toThrow(Error);
     });
   });
 });
