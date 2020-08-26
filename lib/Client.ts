@@ -270,7 +270,6 @@ function statusCodeToError(status: number): JourneyClientError {
   }
 }
 
-// TODO: Is value type any?
 type Properties = { [key: string]: any };
 
 export interface ClientResponse {
