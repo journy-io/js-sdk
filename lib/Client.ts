@@ -6,7 +6,6 @@ import {
 } from "./HttpClient";
 import { Config } from "./Config";
 import { Profile } from "./models/Profile";
-import { DateTime } from "luxon";
 
 export interface ClientConfig {
   apiKeySecret: string;
@@ -292,7 +291,7 @@ export interface TrackEventArguments {
   tag: string;
   campaign: string;
   source: string;
-  recordedAt?: DateTime;
+  recordedAt?: Date;
   journeyProperties?: Properties;
 }
 

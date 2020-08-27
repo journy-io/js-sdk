@@ -10,7 +10,6 @@ import {
   HttpResponse,
 } from "../lib/HttpClient";
 import axios from "axios";
-import { Duration } from "luxon";
 import nock = require("nock");
 
 describe("HttpHeaders", () => {
@@ -59,10 +58,7 @@ describe("HttpClientAxios", () => {
 
     const instance = axios.create();
     delete instance.defaults.headers.common;
-    const axiosClient = new HttpClientAxios(
-      axios,
-      Duration.fromObject({ seconds: 5 })
-    );
+    const axiosClient = new HttpClientAxios(axios, 5000);
 
     const response = await axiosClient.send(
       new HttpRequest(new URL("https://journy.io/"))
@@ -86,10 +82,7 @@ describe("HttpClientLogging", () => {
 
     const instance = axios.create();
     delete instance.defaults.headers.common;
-    const axiosClient = new HttpClientAxios(
-      axios,
-      Duration.fromObject({ seconds: 5 })
-    );
+    const axiosClient = new HttpClientAxios(axios, 5000);
     const client = new HttpClientLogging(axiosClient);
 
     const response = await client.send(

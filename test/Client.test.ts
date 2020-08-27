@@ -189,6 +189,37 @@ describe("JournyClient", () => {
       expect(response.callsRemaining).toEqual(5000);
       expect(response.error).toBeUndefined();
     });
+    it("correctly handles dates", async () => {
+      nock("https://api.test.com")
+        .post("/journeys/events", {
+          email: "test@journy.io",
+          tag: "tag",
+          campaign: "campaign",
+          source: "source",
+          recordedAt: "2019-01-01T00:00:00.000Z",
+        })
+        .matchHeader("x-api-key", "key-secret")
+        .reply(
+          200,
+          {
+            status: "201: Created",
+            message: "The event was succesfully tracked.",
+          },
+          { "X-RateLimit-Remaining": "5000" }
+        );
+
+      const response = await client1.trackEvent({
+        email: "test@journy.io",
+        tag: "tag",
+        campaign: "campaign",
+        source: "source",
+        recordedAt: new Date("2019-01-01T00:00:00.000Z"),
+      });
+      expect(response).toBeDefined();
+      expect(response.success).toBeTruthy();
+      expect(response.callsRemaining).toEqual(5000);
+      expect(response.error).toBeUndefined();
+    });
     it("correctly states when the input is invalid", async () => {
       nock("https://api.test.com")
         .post("/journeys/events", {

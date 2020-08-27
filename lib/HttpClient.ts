@@ -1,6 +1,4 @@
 import { AxiosInstance } from "axios";
-import { Duration } from "luxon";
-import PQueue from "p-queue";
 
 type Method = "GET" | "POST" | "DELETE" | "PUT" | "HEAD";
 
@@ -95,7 +93,7 @@ export class HttpRequestError extends Error {
 export class HttpClientAxios implements HttpClient {
   constructor(
     private readonly axios: AxiosInstance,
-    private readonly timeout: Duration
+    private readonly timeout: number
   ) {}
 
   async send(request: HttpRequest) {
@@ -106,7 +104,7 @@ export class HttpClientAxios implements HttpClient {
       response = await this.axios({
         url: request.getURL().toString(),
         method: request.getMethod(),
-        timeout: this.timeout.as("milliseconds"),
+        timeout: this.timeout,
         headers: request.getHeaders().toObject(),
         data: body ? body : undefined,
         transformResponse: (data) => data,
