@@ -260,7 +260,8 @@ describe("JournyClient", () => {
         .post("/journeys/properties", {
           email: "test@journy.io",
           journeyProperties: {
-            likesDogs: true,
+            hasDogs: "2",
+            boughtDog: "2020-08-27T12:08:21.000Z",
           },
         })
         .matchHeader("x-api-key", "key-secret")
@@ -276,7 +277,8 @@ describe("JournyClient", () => {
       const response = await client1.trackProperties({
         email: "test@journy.io",
         journeyProperties: {
-          likesDogs: true,
+          hasDogs: 2,
+          boughtDog: new Date("2020-08-27T12:08:21+00:00"),
         },
       });
       expect(response).toBeDefined();

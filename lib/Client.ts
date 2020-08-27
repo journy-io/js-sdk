@@ -70,7 +70,7 @@ class JournyClient implements Client {
     private readonly httpClient: HttpClient,
     private readonly clientConfig: ClientConfig
   ) {
-    this.validateClientConfig(clientConfig);
+    JournyClient.validateClientConfig(clientConfig);
   }
 
   private createURL(path: string) {
@@ -94,7 +94,7 @@ class JournyClient implements Client {
     };
   }
 
-  private validateClientConfig(clientConfig: ClientConfig) {
+  private static validateClientConfig(clientConfig: ClientConfig) {
     if (!clientConfig.apiUrl || !clientConfig.apiUrl.trim().length) {
       throw new Error(`The API URL can not be empty.`);
     } else if (
@@ -110,7 +110,16 @@ class JournyClient implements Client {
       this.createURL(`/journeys/events`),
       "POST",
       new HttpHeaders({ "x-api-key": this.clientConfig.apiKeySecret }),
-      args
+      {
+        email: args.email,
+        tag: args.tag,
+        campaign: args.campaign,
+        source: args.source,
+        recordedAt: args.recordedAt ? args.recordedAt.toISOString() : undefined,
+        journeyProperties: args.journeyProperties
+          ? stringifyProperties(args.journeyProperties)
+          : undefined,
+      }
     );
     try {
       const response = await this.httpClient.send(request);
@@ -132,7 +141,12 @@ class JournyClient implements Client {
       this.createURL(`/journeys/properties`),
       "POST",
       new HttpHeaders({ "x-api-key": this.clientConfig.apiKeySecret }),
-      args
+      {
+        email: args.email,
+        journeyProperties: args.journeyProperties
+          ? stringifyProperties(args.journeyProperties)
+          : undefined,
+      }
     );
     try {
       const response = await this.httpClient.send(request);
@@ -250,7 +264,20 @@ function statusCodeToError(status: number): JourneyClientError {
   }
 }
 
-type Properties = { [key: string]: any };
+export type Properties = { [key: string]: string | number | Date };
+
+function stringifyProperties(properties: Properties) {
+  const newProperties: Properties = {};
+  for (let key of Object.keys(properties)) {
+    const value = properties[key];
+    if (value instanceof Date) {
+      newProperties[key] = value.toISOString();
+    } else {
+      newProperties[key] = value.toString();
+    }
+  }
+  return newProperties;
+}
 
 export interface ClientResponse {
   success: boolean;
