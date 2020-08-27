@@ -61,31 +61,16 @@ export interface Client {
  * @param clientConfig The configuration for the Client.
  */
 export function createJournyClient(clientConfig: ClientConfig): Client {
-  validateClientConfig(clientConfig);
-  return new JournyClient(new Config(clientConfig.apiKeySecret), clientConfig);
-}
-
-function validateClientConfig(clientConfig: ClientConfig) {
-  if (!clientConfig.apiUrl || !clientConfig.apiUrl.trim().length) {
-    throw new Error(`The API URL can not be empty.`);
-  } else if (
-    !clientConfig.apiKeySecret ||
-    !clientConfig.apiKeySecret.trim().length
-  ) {
-    throw new Error(`The API Key secret can not be empty.`);
-  }
+  const config = new Config();
+  return new JournyClient(config.getHttpClient(), clientConfig);
 }
 
 class JournyClient implements Client {
-  private readonly httpClient: HttpClient;
-  private readonly apiKeySecret: string;
-
   constructor(
-    private readonly config: Config,
+    private readonly httpClient: HttpClient,
     private readonly clientConfig: ClientConfig
   ) {
-    this.httpClient = this.config.getHttpClient();
-    this.apiKeySecret = clientConfig.apiKeySecret;
+    this.validateClientConfig(clientConfig);
   }
 
   private createURL(path: string) {
@@ -109,11 +94,22 @@ class JournyClient implements Client {
     };
   }
 
+  private validateClientConfig(clientConfig: ClientConfig) {
+    if (!clientConfig.apiUrl || !clientConfig.apiUrl.trim().length) {
+      throw new Error(`The API URL can not be empty.`);
+    } else if (
+      !clientConfig.apiKeySecret ||
+      !clientConfig.apiKeySecret.trim().length
+    ) {
+      throw new Error(`The API Key secret can not be empty.`);
+    }
+  }
+
   async trackEvent(args: TrackEventArguments): Promise<ClientResponse> {
     const request = new HttpRequest(
       this.createURL(`/journeys/events`),
       "POST",
-      new HttpHeaders({ "x-api-key": this.apiKeySecret }),
+      new HttpHeaders({ "x-api-key": this.clientConfig.apiKeySecret }),
       args
     );
     try {
@@ -135,7 +131,7 @@ class JournyClient implements Client {
     const request = new HttpRequest(
       this.createURL(`/journeys/properties`),
       "POST",
-      new HttpHeaders({ "x-api-key": this.apiKeySecret }),
+      new HttpHeaders({ "x-api-key": this.clientConfig.apiKeySecret }),
       args
     );
     try {
@@ -158,7 +154,7 @@ class JournyClient implements Client {
     const request = new HttpRequest(
       this.createURL(`/journeys/profiles?email=${encodeURI(email)}`),
       "GET",
-      new HttpHeaders({ "x-api-key": this.apiKeySecret })
+      new HttpHeaders({ "x-api-key": this.clientConfig.apiKeySecret })
     );
     try {
       const response = await this.httpClient.send(request);
@@ -185,7 +181,7 @@ class JournyClient implements Client {
     const request = new HttpRequest(
       this.createURL(`/tracking/snippet?domain=${encodeURI(domain)}`),
       "GET",
-      new HttpHeaders({ "x-api-key": this.apiKeySecret })
+      new HttpHeaders({ "x-api-key": this.clientConfig.apiKeySecret })
     );
     try {
       const response = await this.httpClient.send(request);
@@ -210,7 +206,7 @@ class JournyClient implements Client {
     const request = new HttpRequest(
       this.createURL(`/validate`),
       "GET",
-      new HttpHeaders({ "x-api-key": this.apiKeySecret })
+      new HttpHeaders({ "x-api-key": this.clientConfig.apiKeySecret })
     );
     try {
       const response = await this.httpClient.send(request);

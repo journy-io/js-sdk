@@ -3,7 +3,7 @@ import { HttpClientAxios } from "../lib/HttpClient";
 
 describe("Config", () => {
   it("returns a HttpClient", () => {
-    const config = new Config("api-key-secret ");
+    const config = new Config();
     const client = config.getHttpClient();
     expect(client).toBeDefined();
     expect(client).toBeInstanceOf(HttpClientAxios);
