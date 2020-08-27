@@ -1,8 +1,8 @@
-# journy-io Node.js SDK
+# journy.io Node.js SDK
 
 This is the Node.js SDK for [journy.io](https://journy.io).
 
-## 💾  Installation
+## 💾 Installation
 
 You can use your package manager (`npm` or `yarn`) to install the SDK. Therefore run:
 
@@ -15,7 +15,6 @@ yarn add @journy-io/sdk
 ```
 
 ## 🔌 Getting started
-
 
 ### Import
 
@@ -129,9 +128,7 @@ The `getTrackingSnippet`-arguments interface is:
 interface args {
   domain: string;
 }
-```
-
-The response of the method-call will include the tracking snippet
+``` 
 
 ### Response types
 
@@ -157,9 +154,15 @@ interface ClientResponseData<T> extends ClientResponse {
 
 which also includes a data field. When an error occurs (and the method call is thus unsuccessful) the data field will be undefined.
 
+## 🔑 Account creation and API Key management
+
+To be able to use the journy.io SDK you should have an API Key. If you don't have one you can create one in the [journy.io](https://journy.io) application. 
+If you don't have an account already, you can create one in [the journy.io application](https://app.journy.io/register). 
+After creating an account - or if you already have an account - you can go to your settings, under the *sources*-tab, to create and edit API Keys. Make sure to give the correct permissions to the API Key and set the correct property-group-name.
+
 ## 📬 API
 
-More documentation and information about the [journy.io](https://journy.io) API can be found on [readme.com](https://journy-io.readme.io/docs).
+More documentation and information about the [journy.io](https://journy.io) API can be found in our [API documentation](https://journy-io.readme.io/docs).
 
 ## 💯 Tests
 
@@ -171,8 +174,8 @@ yarn test
 
 ## 📄 Examples
 
-Examples can be found in the `/examples`-folder.
+Example(s) can be found in the `/examples`-folder.
 
-## ❓ Questions/ problems?
+## ❓ Feedback/ questions or problems?
 
-In case of problems, or if you have any questions about the SDK. Do not hesitate to create an issue.
+In case of questions, problems or feedback about the SDK (or the API). Do not hesitate to create an issue.
