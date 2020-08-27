@@ -51,10 +51,9 @@ The Client interface includes five methods.
 #### init
 
 ```typescript
-init();
+getApiKeySpecs();
 ```
 
-This method should be called before calling any other method. 
 The response of the method-call includes the *property-group-name* configured in the [journy.io](https://journy.io) application and a list of *permissions* the API Key has.
 
 

@@ -14,19 +14,10 @@ export interface ClientConfig {
 
 export interface Client {
   /**
-   * Initialize the Client.
-   * @returns the PropertyGroupName and the Permissions
-   * of the specific ApiKey, and test your configuration.
-   * Returns a ClientError if something went wrong (not authorized...).
-   */
-  init(): Promise<ClientResponseData<InitResponse>>;
-
-  /**
    * Track a user event.
    * @param args The input to track the event
    * @returns A response stating the event was tracked correctly,
    * or an error stating the tracking failed (bad parameters, not authorized...).
-   * @throws Error if the Client was not yet initialized.
    */
   trackEvent(args: TrackEventArguments): Promise<ClientResponse>;
 
@@ -35,7 +26,6 @@ export interface Client {
    * @param args The input to track the user properties.
    * @returns A response stating the properties were tracked correctly,
    * or an error stating the tracking failed (bad parameters, not authorized...).
-   * @throws Error if the Client was not yet initialized.
    */
   trackProperties(args: TrackPropertiesArguments): Promise<ClientResponse>;
 
@@ -44,7 +34,6 @@ export interface Client {
    * @param args The parameters to retrieve the profile.
    * @returns A response with the profile, or an error stating something
    * failed (not found, not authorized...).
-   * @throws Error if the Client was not yet initialized.
    */
   getProfile(
     args: GetProfileArguments
@@ -55,11 +44,16 @@ export interface Client {
    * @param args The parameters to retrieve the Tracking Snippet.
    * @returns A response with the snippet, or an error stating something
    * failed (not found, not authorized...).
-   * @throws Error if the Client was not yet initialized.
    */
   getTrackingSnippet(
     args: GetTrackingSnippetArguments
   ): Promise<ClientResponseData<TrackingSnippetResponse>>;
+
+  /**
+   * Get specs about the API Key such as the permissions and the property-roup-name.
+   * @returns The Api Key Specs.
+   */
+  getApiKeySpecs(): Promise<ClientResponseData<ApiKeySpecs>>;
 }
 
 /**
@@ -84,7 +78,6 @@ function validateClientConfig(clientConfig: ClientConfig) {
 
 class JournyClient implements Client {
   private readonly httpClient: HttpClient;
-  private initialized: boolean = false;
 
   constructor(
     private readonly config: Config,
@@ -114,37 +107,7 @@ class JournyClient implements Client {
     };
   }
 
-  private assertInitialized() {
-    if (!this.initialized) {
-      throw new Error(
-        `The Client is not yet initialized. You should first call '.init()' to initialize the Client.`
-      );
-    }
-  }
-
-  async init(): Promise<ClientResponseData<InitResponse>> {
-    if (this.initialized) {
-      throw new Error(`The Client is already initialized.`);
-    }
-    const request = new HttpRequest(this.createURL(`/validate`), "GET");
-    try {
-      const response = await this.httpClient.send(request);
-      const initResponse: InitResponse = JSON.parse(response.getBody());
-      this.initialized = true;
-      return {
-        success: true,
-        callsRemaining: parseInt(
-          response.getHeaders().byName("X-RateLimit-Remaining")
-        ),
-        data: initResponse,
-      };
-    } catch (error) {
-      return JournyClient.handleError(error);
-    }
-  }
-
   async trackEvent(args: TrackEventArguments): Promise<ClientResponse> {
-    this.assertInitialized();
     const request = new HttpRequest(
       this.createURL(`/journeys/events`),
       "POST",
@@ -167,7 +130,6 @@ class JournyClient implements Client {
   async trackProperties(
     args: TrackPropertiesArguments
   ): Promise<ClientResponse> {
-    this.assertInitialized();
     const request = new HttpRequest(
       this.createURL(`/journeys/properties`),
       "POST",
@@ -190,7 +152,6 @@ class JournyClient implements Client {
   async getProfile(
     args: GetProfileArguments
   ): Promise<ClientResponseData<ProfileResponse>> {
-    this.assertInitialized();
     const { email } = args;
     const request = new HttpRequest(
       this.createURL(`/journeys/profiles?email=${encodeURI(email)}`),
@@ -217,7 +178,6 @@ class JournyClient implements Client {
   async getTrackingSnippet(
     args: GetTrackingSnippetArguments
   ): Promise<ClientResponseData<TrackingSnippetResponse>> {
-    this.assertInitialized();
     const { domain } = args;
     const request = new HttpRequest(
       this.createURL(`/tracking/snippet?domain=${encodeURI(domain)}`),
@@ -236,6 +196,23 @@ class JournyClient implements Client {
           domain: domain,
           snippet: snippet,
         },
+      };
+    } catch (error) {
+      return JournyClient.handleError(error);
+    }
+  }
+
+  async getApiKeySpecs(): Promise<ClientResponseData<ApiKeySpecs>> {
+    const request = new HttpRequest(this.createURL(`/validate`), "GET");
+    try {
+      const response = await this.httpClient.send(request);
+      const specs: ApiKeySpecs = JSON.parse(response.getBody());
+      return {
+        success: true,
+        callsRemaining: parseInt(
+          response.getHeaders().byName("x-rateLimit-remaining")
+        ),
+        data: specs,
       };
     } catch (error) {
       return JournyClient.handleError(error);
@@ -281,7 +258,7 @@ export interface ClientResponseData<T> extends ClientResponse {
   data?: T;
 }
 
-export interface InitResponse {
+export interface ApiKeySpecs {
   propertyGroupName: string;
   permissions: string[];
 }

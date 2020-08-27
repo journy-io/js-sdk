@@ -1,8 +1,8 @@
 import {
+  ApiKeySpecs,
   Client,
   ClientResponseData,
   createJournyClient,
-  InitResponse,
   JourneyClientError,
   ProfileResponse,
   TrackingSnippetResponse,
@@ -48,7 +48,7 @@ describe("JournyClient", () => {
       apiUrl: "https://wrong.api.test.com",
     });
   });
-  describe("init", () => {
+  describe("getApiKeySpecs", () => {
     it("correctly errors when too many requests were made", async () => {
       nock("https://api.test.com")
         .get("/validate")
@@ -61,7 +61,7 @@ describe("JournyClient", () => {
           },
           { "X-RateLimit-Remaining": "0" }
         );
-      const response: ClientResponseData<InitResponse> = await client1.init();
+      const response: ClientResponseData<ApiKeySpecs> = await client1.getApiKeySpecs();
       expect(response).toBeDefined();
       expect(response.success).toBeFalsy();
       expect(response.callsRemaining).toEqual(0);
@@ -80,7 +80,7 @@ describe("JournyClient", () => {
           },
           { "X-RateLimit-Remaining": "5000" }
         );
-      const response: ClientResponseData<InitResponse> = await client1.init();
+      const response: ClientResponseData<ApiKeySpecs> = await client1.getApiKeySpecs();
       expect(response).toBeDefined();
       expect(response.success).toBeFalsy();
       expect(response.callsRemaining).toEqual(5000);
@@ -99,14 +99,14 @@ describe("JournyClient", () => {
           },
           { "X-RateLimit-Remaining": "5000" }
         );
-      const response: ClientResponseData<InitResponse> = await client1.init();
+      const response: ClientResponseData<ApiKeySpecs> = await client1.getApiKeySpecs();
       expect(response).toBeDefined();
       expect(response.success).toBeFalsy();
       expect(response.callsRemaining).toEqual(5000);
       expect(response.error).toEqual(JourneyClientError.ServerError);
       expect(response.data).toBeUndefined();
     });
-    it("should correctly initialize", async () => {
+    it("should correctly get api key specs", async () => {
       nock("https://api.test.com")
         .get("/validate")
         .matchHeader("x-api-key", "key-secret")
@@ -129,7 +129,7 @@ describe("JournyClient", () => {
           { "X-RateLimit-Remaining": "5000" }
         );
 
-      const response: ClientResponseData<InitResponse> = await client1.init();
+      const response: ClientResponseData<ApiKeySpecs> = await client1.getApiKeySpecs();
       expect(response).toBeDefined();
       expect(response.success).toBeTruthy();
       expect(response.callsRemaining).toEqual(5000);
@@ -141,22 +141,19 @@ describe("JournyClient", () => {
       ]);
       expect(response.data.propertyGroupName).toEqual("test");
 
-      const response2: ClientResponseData<InitResponse> = await client2.init();
+      const response2: ClientResponseData<ApiKeySpecs> = await client2.getApiKeySpecs();
       expect(response2).toBeDefined();
       expect(response2.success).toBeFalsy();
       expect(response2.callsRemaining).toEqual(5000);
       expect(response2.error).toEqual(JourneyClientError.NotFoundError);
       expect(response2.data).toBeUndefined();
 
-      const response3: ClientResponseData<InitResponse> = await client3.init();
+      const response3: ClientResponseData<ApiKeySpecs> = await client3.getApiKeySpecs();
       expect(response3).toBeDefined();
       expect(response3.success).toBeFalsy();
       expect(response3.error).toEqual(JourneyClientError.UnknownError);
       expect(response3.callsRemaining).toBeUndefined();
       expect(response3.data).toBeUndefined();
-    });
-    it("throws an error when trying to initialize a second time", async () => {
-      await expect(client1.init()).rejects.toThrow(Error);
     });
   });
   describe("trackEvent", () => {
@@ -256,16 +253,6 @@ describe("JournyClient", () => {
       expect(response1.error).toBeDefined();
       expect(response1.error).toEqual(JourneyClientError.BadArgumentsError);
     });
-    it("correctly throws error because the client was not yet initialized", async () => {
-      await expect(
-        client3.trackEvent({
-          email: "test@journy.io",
-          tag: "tag",
-          campaign: "campaign",
-          source: "source",
-        })
-      ).rejects.toThrow(Error);
-    });
   });
   describe("trackProperties", () => {
     it("correctly tracks properties", async () => {
@@ -329,16 +316,6 @@ describe("JournyClient", () => {
       expect(response1.callsRemaining).toEqual(5000);
       expect(response1.error).toBeDefined();
       expect(response1.error).toEqual(JourneyClientError.BadArgumentsError);
-    });
-    it("correctly throws error because the client was not yet initialized", async () => {
-      await expect(
-        client3.trackProperties({
-          email: "test@journy.io",
-          journeyProperties: {
-            likesDogs: true,
-          },
-        })
-      ).rejects.toThrow(Error);
     });
   });
   describe("getProfile", () => {
@@ -414,13 +391,6 @@ describe("JournyClient", () => {
       expect(response.error).toEqual(JourneyClientError.UnauthorizedError);
       expect(response.data).toBeUndefined();
     });
-    it("correctly throws error because the client was not yet initialized", async () => {
-      await expect(
-        client3.getProfile({
-          email: "test@journy.io",
-        })
-      ).rejects.toThrow(Error);
-    });
   });
   describe("getTrackingSnippet", () => {
     it("correctly returns an existing snippet", async () => {
@@ -472,13 +442,6 @@ describe("JournyClient", () => {
       expect(response.callsRemaining).toEqual(5000);
       expect(response.error).toEqual(JourneyClientError.NotFoundError);
       expect(response.data).toBeUndefined();
-    });
-    it("correctly throws error because the client was not yet initialized", async () => {
-      await expect(
-        client3.getTrackingSnippet({
-          domain: "nonexisting.com",
-        })
-      ).rejects.toThrow(Error);
     });
   });
 });
