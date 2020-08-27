@@ -65,7 +65,7 @@ export function createJournyClient(clientConfig: ClientConfig): Client {
   return new JournyClient(config.getHttpClient(), clientConfig);
 }
 
-class JournyClient implements Client {
+export class JournyClient implements Client {
   constructor(
     private readonly httpClient: HttpClient,
     private readonly clientConfig: ClientConfig
@@ -204,7 +204,7 @@ class JournyClient implements Client {
       return {
         success: true,
         callsRemaining: parseInt(
-          response.getHeaders().byName("x-rateLimit-remaining")
+          response.getHeaders().byName("X-RateLimit-Remaining")
         ),
         data: {
           domain: domain,
@@ -212,6 +212,7 @@ class JournyClient implements Client {
         },
       };
     } catch (error) {
+      console.log(error);
       return JournyClient.handleError(error);
     }
   }
@@ -228,7 +229,7 @@ class JournyClient implements Client {
       return {
         success: true,
         callsRemaining: parseInt(
-          response.getHeaders().byName("x-rateLimit-remaining")
+          response.getHeaders().byName("X-RateLimit-Remaining")
         ),
         data: specs,
       };
@@ -264,7 +265,7 @@ function statusCodeToError(status: number): JourneyClientError {
   }
 }
 
-export type Properties = { [key: string]: string | number | Date };
+export type Properties = { [key: string]: string | number | boolean | Date };
 
 function stringifyProperties(properties: Properties) {
   const newProperties: Properties = {};

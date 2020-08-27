@@ -1,13 +1,19 @@
 import {
   ApiKeySpecs,
-  Client,
+  JournyClient,
   ClientResponseData,
   createJournyClient,
   JourneyClientError,
   ProfileResponse,
   TrackingSnippetResponse,
-} from "../lib";
-import nock = require("nock");
+} from "../lib/Client";
+import {
+  HttpClientMatch,
+  HttpClientThatThrows,
+  HttpHeaders,
+  HttpRequest,
+  HttpResponse,
+} from "../lib/HttpClient";
 
 describe("createJournyClient", () => {
   it("fails when the config is invalid", () => {
@@ -31,37 +37,43 @@ describe("createJournyClient", () => {
 });
 
 describe("JournyClient", () => {
-  let client1: Client;
-  let client2: Client;
-  let client3: Client;
-  it("creates journy clients", async () => {
-    client1 = await createJournyClient({
-      apiKeySecret: "key-secret",
-      apiUrl: "https://api.test.com",
-    });
-    client2 = await createJournyClient({
-      apiKeySecret: "non-existing-secret",
-      apiUrl: "https://api.test.com",
-    });
-    client3 = await createJournyClient({
-      apiKeySecret: "key-secret",
-      apiUrl: "https://wrong.api.test.com",
-    });
+  const clientConfig = {
+    apiKeySecret: "key-secret",
+    apiUrl: "https://api.test.com",
+  };
+  const nonExistingClientConfig = {
+    apiKeySecret: "non-existing-key-secret",
+    apiUrl: "https://api.test.com",
+  };
+  const keySecretHeader = new HttpHeaders({ "x-api-key": "key-secret" });
+  const nonExistingKeySecretHeader = new HttpHeaders({
+    "x-api-key": "non-existing-key-secret",
   });
+  const rateLimitHeader = new HttpHeaders({ "X-RateLimit-Remaining": "5000" });
+  const tooManyRateLimitHeader = new HttpHeaders({
+    "X-RateLimit-Remaining": "0",
+  });
+  const tooManyRequestsResponse = new HttpResponse(429, tooManyRateLimitHeader);
+  const unknownErrorResponse = new HttpResponse(444, rateLimitHeader);
+  const serverErrorResponse = new HttpResponse(500, rateLimitHeader);
+  const notFoundResponse = new HttpResponse(404, rateLimitHeader);
+  const notAuthorizedResponse = new HttpResponse(401, rateLimitHeader);
+  const badRequestResponse = new HttpResponse(400, rateLimitHeader);
+  const createdResponse = new HttpResponse(201, rateLimitHeader);
+
   describe("getApiKeySpecs", () => {
     it("correctly errors when too many requests were made", async () => {
-      nock("https://api.test.com")
-        .get("/validate")
-        .matchHeader("x-api-key", "key-secret")
-        .reply(
-          429,
-          {
-            status: "429: Too many requests",
-            message: "Too many requests were made to the API.",
-          },
-          { "X-RateLimit-Remaining": "0" }
-        );
-      const response: ClientResponseData<ApiKeySpecs> = await client1.getApiKeySpecs();
+      const validateClient = new HttpClientMatch(tooManyRequestsResponse);
+      const expectedRequest = new HttpRequest(
+        new URL("https://api.test.com/validate"),
+        "GET",
+        keySecretHeader
+      );
+
+      const client = new JournyClient(validateClient, clientConfig);
+      const response: ClientResponseData<ApiKeySpecs> = await client.getApiKeySpecs();
+
+      expect(validateClient.getLastRequest()).toEqual(expectedRequest);
       expect(response).toBeDefined();
       expect(response.success).toBeFalsy();
       expect(response.callsRemaining).toEqual(0);
@@ -69,18 +81,17 @@ describe("JournyClient", () => {
       expect(response.data).toBeUndefined();
     });
     it("correctly perseveres an unknown error", async () => {
-      nock("https://api.test.com")
-        .get("/validate")
-        .matchHeader("x-api-key", "key-secret")
-        .reply(
-          444,
-          {
-            status: "444: Unknown error",
-            message: "This error is not known.",
-          },
-          { "X-RateLimit-Remaining": "5000" }
-        );
-      const response: ClientResponseData<ApiKeySpecs> = await client1.getApiKeySpecs();
+      const validateClient = new HttpClientMatch(unknownErrorResponse);
+      const expectedRequest = new HttpRequest(
+        new URL("https://api.test.com/validate"),
+        "GET",
+        keySecretHeader
+      );
+
+      const client = new JournyClient(validateClient, clientConfig);
+      const response: ClientResponseData<ApiKeySpecs> = await client.getApiKeySpecs();
+
+      expect(validateClient.getLastRequest()).toEqual(expectedRequest);
       expect(response).toBeDefined();
       expect(response.success).toBeFalsy();
       expect(response.callsRemaining).toEqual(5000);
@@ -88,18 +99,17 @@ describe("JournyClient", () => {
       expect(response.data).toBeUndefined();
     });
     it("correctly perseveres a server error", async () => {
-      nock("https://api.test.com")
-        .get("/validate")
-        .matchHeader("x-api-key", "key-secret")
-        .reply(
-          500,
-          {
-            status: "500: Server error",
-            message: "This error is from the server.",
-          },
-          { "X-RateLimit-Remaining": "5000" }
-        );
-      const response: ClientResponseData<ApiKeySpecs> = await client1.getApiKeySpecs();
+      const validateClient = new HttpClientMatch(serverErrorResponse);
+      const expectedRequest = new HttpRequest(
+        new URL("https://api.test.com/validate"),
+        "GET",
+        keySecretHeader
+      );
+
+      const client = new JournyClient(validateClient, clientConfig);
+      const response: ClientResponseData<ApiKeySpecs> = await client.getApiKeySpecs();
+
+      expect(validateClient.getLastRequest()).toEqual(expectedRequest);
       expect(response).toBeDefined();
       expect(response.success).toBeFalsy();
       expect(response.callsRemaining).toEqual(5000);
@@ -107,29 +117,41 @@ describe("JournyClient", () => {
       expect(response.data).toBeUndefined();
     });
     it("should correctly get api key specs", async () => {
-      nock("https://api.test.com")
-        .get("/validate")
-        .matchHeader("x-api-key", "key-secret")
-        .reply(
+      const validateClient1 = new HttpClientMatch(
+        new HttpResponse(
           200,
-          {
+          rateLimitHeader,
+          JSON.stringify({
             permissions: ["TrackData", "GetTrackingSnippet", "ReadUserProfile"],
             propertyGroupName: "test",
-          },
-          { "X-RateLimit-Remaining": "5000" }
-        );
-      nock("https://api.test.com")
-        .get("/validate")
-        .matchHeader("x-api-key", "non-existing-secret")
-        .reply(
-          404,
-          {
-            message: "404: Not found",
-          },
-          { "X-RateLimit-Remaining": "5000" }
-        );
+          })
+        )
+      );
+      const expectedRequest1 = new HttpRequest(
+        new URL("https://api.test.com/validate"),
+        "GET",
+        keySecretHeader
+      );
 
-      const response: ClientResponseData<ApiKeySpecs> = await client1.getApiKeySpecs();
+      const validateClient2 = new HttpClientMatch(notFoundResponse);
+      const expectedRequest2 = new HttpRequest(
+        new URL("https://api.test.com/validate"),
+        "GET",
+        nonExistingKeySecretHeader
+      );
+
+      const client = new JournyClient(validateClient1, clientConfig);
+      const client2 = new JournyClient(
+        validateClient2,
+        nonExistingClientConfig
+      );
+      const client3 = new JournyClient(
+        new HttpClientThatThrows(),
+        clientConfig
+      );
+
+      const response: ClientResponseData<ApiKeySpecs> = await client.getApiKeySpecs();
+      expect(validateClient1.getLastRequest()).toEqual(expectedRequest1);
       expect(response).toBeDefined();
       expect(response.success).toBeTruthy();
       expect(response.callsRemaining).toEqual(5000);
@@ -142,6 +164,7 @@ describe("JournyClient", () => {
       expect(response.data.propertyGroupName).toEqual("test");
 
       const response2: ClientResponseData<ApiKeySpecs> = await client2.getApiKeySpecs();
+      expect(validateClient2.getLastRequest()).toEqual(expectedRequest2);
       expect(response2).toBeDefined();
       expect(response2.success).toBeFalsy();
       expect(response2.callsRemaining).toEqual(5000);
@@ -158,24 +181,21 @@ describe("JournyClient", () => {
   });
   describe("trackEvent", () => {
     it("correctly tracks an event", async () => {
-      nock("https://api.test.com")
-        .post("/journeys/events", {
+      const eventClient = new HttpClientMatch(createdResponse);
+      const expectedRequest = new HttpRequest(
+        new URL("https://api.test.com/journeys/events"),
+        "POST",
+        keySecretHeader,
+        {
           email: "test@journy.io",
           tag: "tag",
           campaign: "campaign",
           source: "source",
-        })
-        .matchHeader("x-api-key", "key-secret")
-        .reply(
-          200,
-          {
-            status: "201: Created",
-            message: "The event was succesfully tracked.",
-          },
-          { "X-RateLimit-Remaining": "5000" }
-        );
+        }
+      );
 
-      const response = await client1.trackEvent({
+      const client = new JournyClient(eventClient, clientConfig);
+      const response = await client.trackEvent({
         email: "test@journy.io",
         tag: "tag",
         campaign: "campaign",
@@ -187,66 +207,58 @@ describe("JournyClient", () => {
       expect(response.error).toBeUndefined();
     });
     it("correctly handles dates", async () => {
-      nock("https://api.test.com")
-        .post("/journeys/events", {
+      const eventClient = new HttpClientMatch(createdResponse);
+      const expectedRequest = new HttpRequest(
+        new URL("https://api.test.com/journeys/events"),
+        "POST",
+        keySecretHeader,
+        {
           email: "test@journy.io",
           tag: "tag",
           campaign: "campaign",
           source: "source",
           recordedAt: "2019-01-01T00:00:00.000Z",
-        })
-        .matchHeader("x-api-key", "key-secret")
-        .reply(
-          200,
-          {
-            status: "201: Created",
-            message: "The event was succesfully tracked.",
-          },
-          { "X-RateLimit-Remaining": "5000" }
-        );
+        }
+      );
 
-      const response = await client1.trackEvent({
+      const client = new JournyClient(eventClient, clientConfig);
+      const response = await client.trackEvent({
         email: "test@journy.io",
         tag: "tag",
         campaign: "campaign",
         source: "source",
         recordedAt: new Date("2019-01-01T00:00:00.000Z"),
       });
+
+      expect(eventClient.getLastRequest()).toEqual(expectedRequest);
       expect(response).toBeDefined();
       expect(response.success).toBeTruthy();
       expect(response.callsRemaining).toEqual(5000);
       expect(response.error).toBeUndefined();
     });
     it("correctly states when the input is invalid", async () => {
-      nock("https://api.test.com")
-        .post("/journeys/events", {
+      const eventClient = new HttpClientMatch(badRequestResponse);
+      const expectedRequest = new HttpRequest(
+        new URL("https://api.test.com/journeys/events"),
+        "POST",
+        keySecretHeader,
+        {
           email: "notAnEmail",
           tag: "tag",
           campaign: "campaign",
           source: "source",
-        })
-        .matchHeader("x-api-key", "key-secret")
-        .reply(
-          400,
-          {
-            status: "400: Bad Request",
-            message:
-              "Some fields/ parameters were filled in incorrectly or were missing.",
-            errors: {
-              fields: {
-                email:
-                  "The field email's type and/ or format is incorrect. Expected type: string, expected format (if not undefined): email",
-              },
-            },
-          },
-          { "X-RateLimit-Remaining": "5000" }
-        );
-      const response1 = await client1.trackEvent({
+        }
+      );
+
+      const client = new JournyClient(eventClient, clientConfig);
+      const response1 = await client.trackEvent({
         email: "notAnEmail",
         tag: "tag",
         campaign: "campaign",
         source: "source",
       });
+
+      expect(eventClient.getLastRequest()).toEqual(expectedRequest);
       expect(response1).toBeDefined();
       expect(response1.success).toBeFalsy();
       expect(response1.callsRemaining).toEqual(5000);
@@ -256,31 +268,34 @@ describe("JournyClient", () => {
   });
   describe("trackProperties", () => {
     it("correctly tracks properties", async () => {
-      nock("https://api.test.com")
-        .post("/journeys/properties", {
+      const propertiesClient = new HttpClientMatch(createdResponse);
+      const expectedRequest = new HttpRequest(
+        new URL("https://api.test.com/journeys/properties"),
+        "POST",
+        new HttpHeaders({ "x-api-key": "key-secret" }),
+        {
           email: "test@journy.io",
           journeyProperties: {
             hasDogs: "2",
             boughtDog: "2020-08-27T12:08:21.000Z",
+            likesDog: "true",
+            firstDogName: "Journy",
           },
-        })
-        .matchHeader("x-api-key", "key-secret")
-        .reply(
-          201,
-          {
-            status: "201: Created",
-            message: "The properties were succesfully tracked.",
-          },
-          { "X-RateLimit-Remaining": "5000" }
-        );
+        }
+      );
 
-      const response = await client1.trackProperties({
+      const client = new JournyClient(propertiesClient, clientConfig);
+      const response = await client.trackProperties({
         email: "test@journy.io",
         journeyProperties: {
+          likesDog: true,
           hasDogs: 2,
           boughtDog: new Date("2020-08-27T12:08:21+00:00"),
+          firstDogName: "Journy",
         },
       });
+
+      expect(propertiesClient.getLastRequest()).toEqual(expectedRequest);
       expect(response).toBeDefined();
       expect(response.error).toBeUndefined();
       expect(response.success).toBeTruthy();
@@ -288,31 +303,24 @@ describe("JournyClient", () => {
       expect(response.error).toBeUndefined();
     });
     it("correctly shows when the input parameters are invalid", async () => {
-      nock("https://api.test.com")
-        .post("/journeys/properties", {
+      const propertiesClient = new HttpClientMatch(badRequestResponse);
+      const expectedRequest = new HttpRequest(
+        new URL("https://api.test.com/journeys/properties"),
+        "POST",
+        new HttpHeaders({ "x-api-key": "key-secret" }),
+        {
           email: "test@journy.io",
           journeyProperties: undefined,
-        })
-        .matchHeader("x-api-key", "key-secret")
-        .reply(
-          400,
-          {
-            status: "400: Bad Request",
-            message:
-              "Some fields/ parameters were filled in incorrectly or were missing.",
-            errors: {
-              fields: {
-                journeyProperties: "The 'journeyProperties' field is required.",
-              },
-            },
-          },
-          { "X-RateLimit-Remaining": "5000" }
-        );
+        }
+      );
 
-      const response1 = await client1.trackProperties({
+      const client = new JournyClient(propertiesClient, clientConfig);
+      const response1 = await client.trackProperties({
         email: "test@journy.io",
         journeyProperties: undefined,
       });
+
+      expect(propertiesClient.getLastRequest()).toEqual(expectedRequest);
       expect(response1).toBeDefined();
       expect(response1.success).toBeFalsy();
       expect(response1.callsRemaining).toEqual(5000);
@@ -329,44 +337,47 @@ describe("JournyClient", () => {
         devices: [],
         touchpoints: [],
       };
-      nock("https://api.test.com")
-        .get("/journeys/profiles")
-        .query({ email: "test@journy.io" })
-        .matchHeader("x-api-key", "key-secret")
-        .reply(200, profile, { "X-RateLimit-Remaining": "1234" });
-      const response: ClientResponseData<ProfileResponse> = await client1.getProfile(
+      const profileClient = new HttpClientMatch(
+        new HttpResponse(
+          200,
+          new HttpHeaders({ "X-RateLimit-Remaining": "5000" }),
+          JSON.stringify(profile)
+        )
+      );
+      const expectedResponse = new HttpRequest(
+        new URL("https://api.test.com/journeys/profiles?email=test@journy.io"),
+        "GET",
+        keySecretHeader
+      );
+
+      const client = new JournyClient(profileClient, clientConfig);
+      const response: ClientResponseData<ProfileResponse> = await client.getProfile(
         { email: "test@journy.io" }
       );
+
+      expect(profileClient.getLastRequest()).toEqual(expectedResponse);
       expect(response).toBeDefined();
       expect(response.success).toBeTruthy();
-      expect(response.callsRemaining).toEqual(1234);
+      expect(response.callsRemaining).toEqual(5000);
       expect(response.error).toBeUndefined();
       expect(response.data).toBeDefined();
       expect(response.data.email).toEqual("test@journy.io");
       expect(response.data.profile).toEqual(profile);
     });
     it("correctly fails with incorrect arguments", async () => {
-      const bad = {
-        status: "400: Bad Request",
-        message:
-          "Some fields/ parameters were filled in incorrectly or were missing.",
-        errors: {
-          parameters: {
-            query: {
-              email:
-                "The parameter email's type and/ or format is incorrect. Expected type: string, expected format (if not undefined): email",
-            },
-          },
-        },
-      };
-      nock("https://api.test.com")
-        .get("/journeys/profiles")
-        .matchHeader("x-api-key", "key-secret")
-        .query({ email: "" })
-        .reply(400, bad, { "X-RateLimit-Remaining": "5000" });
-      const response: ClientResponseData<ProfileResponse> = await client1.getProfile(
+      const profileClient = new HttpClientMatch(badRequestResponse);
+      const expectedRequest = new HttpRequest(
+        new URL("https://api.test.com/journeys/profiles?email="),
+        "GET",
+        keySecretHeader
+      );
+
+      const client = new JournyClient(profileClient, clientConfig);
+      const response: ClientResponseData<ProfileResponse> = await client.getProfile(
         { email: "" }
       );
+
+      expect(profileClient.getLastRequest()).toEqual(expectedRequest);
       expect(response).toBeDefined();
       expect(response.success).toBeFalsy();
       expect(response.callsRemaining).toEqual(5000);
@@ -374,19 +385,19 @@ describe("JournyClient", () => {
       expect(response.data).toBeUndefined();
     });
     it("correctly fails when not authorized", async () => {
-      const bad = {
-        status: "401: Unauthorized",
-        message:
-          "You are not authorized to access the '/journeys/profiles' endpoint.",
-      };
-      nock("https://api.test.com")
-        .get("/journeys/profiles")
-        .matchHeader("x-api-key", "key-secret")
-        .query({ email: "" })
-        .reply(401, bad, { "X-RateLimit-Remaining": "5000" });
-      const response: ClientResponseData<ProfileResponse> = await client1.getProfile(
-        { email: "" }
+      const profileClient = new HttpClientMatch(notAuthorizedResponse);
+      const expectedRequest = new HttpRequest(
+        new URL("https://api.test.com/journeys/profiles?email=test@journy.io"),
+        "GET",
+        keySecretHeader
       );
+
+      const client = new JournyClient(profileClient, clientConfig);
+      const response: ClientResponseData<ProfileResponse> = await client.getProfile(
+        { email: "test@journy.io" }
+      );
+
+      expect(profileClient.getLastRequest()).toEqual(expectedRequest);
       expect(response).toBeDefined();
       expect(response.success).toBeFalsy();
       expect(response.callsRemaining).toEqual(5000);
@@ -396,24 +407,30 @@ describe("JournyClient", () => {
   });
   describe("getTrackingSnippet", () => {
     it("correctly returns an existing snippet", async () => {
-      nock("https://api.test.com")
-        .get("/tracking/snippet")
-        .query({ domain: "journy.io" })
-        .matchHeader("x-api-key", "key-secret")
-        .reply(
+      const trackingsnippetClient = new HttpClientMatch(
+        new HttpResponse(
           200,
-          {
+          new HttpHeaders({ "X-RateLimit-Remaining": "5000" }),
+          JSON.stringify({
             domain: "journy.io",
             snippet: "<script>snippet</script>",
-          },
-          { "X-RateLimit-Remaining": "5000" }
-        );
+          })
+        )
+      );
+      const expectedRequest = new HttpRequest(
+        new URL("https://api.test.com/tracking/snippet?domain=journy.io"),
+        "GET",
+        keySecretHeader
+      );
 
-      const response: ClientResponseData<TrackingSnippetResponse> = await client1.getTrackingSnippet(
+      const client = new JournyClient(trackingsnippetClient, clientConfig);
+      const response: ClientResponseData<TrackingSnippetResponse> = await client.getTrackingSnippet(
         {
           domain: "journy.io",
         }
       );
+
+      expect(trackingsnippetClient.getLastRequest()).toEqual(expectedRequest);
       expect(response).toBeDefined();
       expect(response.success).toBeTruthy();
       expect(response.callsRemaining).toEqual(5000);
@@ -421,24 +438,20 @@ describe("JournyClient", () => {
       expect(response.data.snippet).toBeDefined();
     });
     it("correctly notifies a domain not being found", async () => {
-      nock("https://api.test.com")
-        .get("/tracking/snippet")
-        .query({ domain: "nonexisting.com" })
-        .matchHeader("x-api-key", "key-secret")
-        .reply(
-          404,
-          {
-            status: "404: Not Found",
-            message: "The domain 'nonexisting.com' could not be found.",
-          },
-          { "X-RateLimit-Remaining": "5000" }
-        );
+      const trackingsnippetClient = new HttpClientMatch(notFoundResponse);
+      const expectedRequest = new HttpRequest(
+        new URL("https://api.test.com/tracking/snippet?domain=nonexisting.com"),
+        "GET",
+        keySecretHeader
+      );
 
-      const response: ClientResponseData<TrackingSnippetResponse> = await client1.getTrackingSnippet(
+      const client = new JournyClient(trackingsnippetClient, clientConfig);
+      const response: ClientResponseData<TrackingSnippetResponse> = await client.getTrackingSnippet(
         {
           domain: "nonexisting.com",
         }
       );
+      expect(trackingsnippetClient.getLastRequest()).toEqual(expectedRequest);
       expect(response).toBeDefined();
       expect(response.success).toBeFalsy();
       expect(response.callsRemaining).toEqual(5000);

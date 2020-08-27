@@ -1,5 +1,4 @@
 import {
-  HttpClientAxios,
   HttpClientFixed,
   HttpClientLogging,
   HttpClientThatThrows,
@@ -8,8 +7,6 @@ import {
   HttpRequestError,
   HttpResponse,
 } from "../lib/HttpClient";
-import axios from "axios";
-import nock = require("nock");
 
 describe("HttpHeaders", () => {
   it("works", () => {
@@ -26,6 +23,23 @@ describe("HttpHeaders", () => {
     expect(headers.byName("unknown")).toEqual(undefined);
     expect(headers.byName("set-cookie")).toEqual("cookie");
     expect(headers.byName("Set-COOKIE")).toEqual("cookie");
+  });
+});
+
+describe("HttpRequest", () => {
+  it("works", () => {
+    const request = new HttpRequest(
+      new URL("https://journy.io"),
+      "GET",
+      new HttpHeaders({ accept: "text/html" }),
+      { hasBody: true }
+    );
+    expect(request).toBeDefined();
+    expect(request.getHeaders()).toEqual(
+      new HttpHeaders({ accept: "text/html" })
+    );
+    expect(request.getMethod()).toEqual("GET");
+    expect(request.getBody()).toEqual({ hasBody: true });
   });
 });
 
@@ -51,21 +65,6 @@ describe("HttpRequestError", () => {
   });
 });
 
-describe("HttpClientAxios", () => {
-  it("works", async () => {
-    nock("https://journy.io").get("/").reply(200);
-
-    const instance = axios.create();
-    delete instance.defaults.headers.common;
-    const axiosClient = new HttpClientAxios(axios, 5000);
-
-    const response = await axiosClient.send(
-      new HttpRequest(new URL("https://journy.io/"))
-    );
-    expect(response.getBody()).toEqual("");
-  });
-});
-
 describe("HttpClientThatThrows", () => {
   it("works", async () => {
     const client = new HttpClientThatThrows();
@@ -77,13 +76,10 @@ describe("HttpClientThatThrows", () => {
 
 describe("HttpClientLogging", () => {
   it("works", async () => {
-    nock("https://journy.io").get("/").reply(200, "success");
+    const fixedResponse = new HttpResponse(200, new HttpHeaders(), "success");
+    const fixedClient = new HttpClientFixed(fixedResponse);
 
-    const instance = axios.create();
-    delete instance.defaults.headers.common;
-    const axiosClient = new HttpClientAxios(axios, 5000);
-    const client = new HttpClientLogging(axiosClient);
-
+    const client = new HttpClientLogging(fixedClient);
     const response = await client.send(
       new HttpRequest(new URL("https://journy.io/"))
     );

@@ -167,3 +167,29 @@ export class HttpClientFixed implements HttpClient {
     return this.response;
   }
 }
+
+export class HttpClientMatch implements HttpClient {
+  private lastRequest: HttpRequest;
+
+  constructor(private response: HttpResponse) {}
+
+  async send(request: HttpRequest) {
+    this.lastRequest = request;
+    if (
+      200 <= this.response.getStatusCode() &&
+      this.response.getStatusCode() < 300
+    ) {
+      return this.response;
+    } else {
+      throw new HttpRequestError(
+        `errorMessage`,
+        this.response.getStatusCode(),
+        this.response.getHeaders()
+      );
+    }
+  }
+
+  getLastRequest() {
+    return this.lastRequest;
+  }
+}
