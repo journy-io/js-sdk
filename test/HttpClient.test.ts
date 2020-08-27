@@ -1,5 +1,4 @@
 import {
-  HttpClientApi,
   HttpClientAxios,
   HttpClientFixed,
   HttpClientLogging,

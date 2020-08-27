@@ -78,12 +78,14 @@ function validateClientConfig(clientConfig: ClientConfig) {
 
 class JournyClient implements Client {
   private readonly httpClient: HttpClient;
+  private readonly apiKeySecret: string;
 
   constructor(
     private readonly config: Config,
     private readonly clientConfig: ClientConfig
   ) {
     this.httpClient = this.config.getHttpClient();
+    this.apiKeySecret = clientConfig.apiKeySecret;
   }
 
   private createURL(path: string) {
@@ -111,7 +113,7 @@ class JournyClient implements Client {
     const request = new HttpRequest(
       this.createURL(`/journeys/events`),
       "POST",
-      new HttpHeaders(),
+      new HttpHeaders({ "x-api-key": this.apiKeySecret }),
       args
     );
     try {
@@ -133,7 +135,7 @@ class JournyClient implements Client {
     const request = new HttpRequest(
       this.createURL(`/journeys/properties`),
       "POST",
-      new HttpHeaders(),
+      new HttpHeaders({ "x-api-key": this.apiKeySecret }),
       args
     );
     try {
@@ -155,7 +157,8 @@ class JournyClient implements Client {
     const { email } = args;
     const request = new HttpRequest(
       this.createURL(`/journeys/profiles?email=${encodeURI(email)}`),
-      "GET"
+      "GET",
+      new HttpHeaders({ "x-api-key": this.apiKeySecret })
     );
     try {
       const response = await this.httpClient.send(request);
@@ -181,7 +184,8 @@ class JournyClient implements Client {
     const { domain } = args;
     const request = new HttpRequest(
       this.createURL(`/tracking/snippet?domain=${encodeURI(domain)}`),
-      "GET"
+      "GET",
+      new HttpHeaders({ "x-api-key": this.apiKeySecret })
     );
     try {
       const response = await this.httpClient.send(request);
@@ -203,7 +207,11 @@ class JournyClient implements Client {
   }
 
   async getApiKeySpecs(): Promise<ClientResponseData<ApiKeySpecs>> {
-    const request = new HttpRequest(this.createURL(`/validate`), "GET");
+    const request = new HttpRequest(
+      this.createURL(`/validate`),
+      "GET",
+      new HttpHeaders({ "x-api-key": this.apiKeySecret })
+    );
     try {
       const response = await this.httpClient.send(request);
       const specs: ApiKeySpecs = JSON.parse(response.getBody());

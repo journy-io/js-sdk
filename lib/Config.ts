@@ -1,4 +1,4 @@
-import { HttpClient, HttpClientApi, HttpClientAxios } from "./HttpClient";
+import { HttpClient, HttpClientAxios } from "./HttpClient";
 import axios from "axios";
 
 export class Config {
@@ -8,9 +8,6 @@ export class Config {
     const instance = axios.create();
     delete instance.defaults.headers.common;
 
-    return new HttpClientApi(
-      this.apiKeySecret,
-      new HttpClientAxios(instance, timeout)
-    );
+    return new HttpClientAxios(instance, timeout);
   }
 }

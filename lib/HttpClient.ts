@@ -137,28 +137,6 @@ export class HttpClientAxios implements HttpClient {
   }
 }
 
-export class HttpClientApi implements HttpClient {
-  constructor(
-    private readonly apiKey: string,
-    private readonly client: HttpClient
-  ) {}
-
-  send(request: HttpRequest): Promise<HttpResponse> {
-    const newHeaders = new HttpHeaders({
-      ...request.getHeaders().toObject(),
-      "x-api-key": this.apiKey,
-    });
-    return this.client.send(
-      new HttpRequest(
-        request.getURL(),
-        request.getMethod(),
-        newHeaders,
-        request.getBody()
-      )
-    );
-  }
-}
-
 export class HttpClientThatThrows implements HttpClient {
   async send(_: HttpRequest): Promise<HttpResponse> {
     throw new Error("HttpClientThatThrows");
