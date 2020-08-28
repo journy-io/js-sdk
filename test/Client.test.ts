@@ -1,8 +1,8 @@
 import {
   ApiKeySpecs,
-  JournyClient,
+  Client,
   ClientResponseData,
-  createJournyClient,
+  createClient,
   JourneyClientError,
   ProfileResponse,
   TrackingSnippetResponse,
@@ -17,18 +17,16 @@ import {
 
 describe("createJournyClient", () => {
   it("fails when the config is invalid", () => {
-    expect(() => createJournyClient({ apiKeySecret: "", apiUrl: "" })).toThrow(
-      Error
-    );
+    expect(() => createClient({ apiKeySecret: "", apiUrl: "" })).toThrow(Error);
     expect(() =>
-      createJournyClient({ apiKeySecret: "non-empty-key", apiUrl: "" })
+      createClient({ apiKeySecret: "non-empty-key", apiUrl: "" })
     ).toThrow(Error);
     expect(() =>
-      createJournyClient({ apiKeySecret: "", apiUrl: "non-empty-url" })
+      createClient({ apiKeySecret: "", apiUrl: "non-empty-url" })
     ).toThrow(Error);
   });
   it("creates a journy client", () => {
-    const client = createJournyClient({
+    const client = createClient({
       apiKeySecret: "key-secret",
       apiUrl: "https://api.test.com",
     });
@@ -70,7 +68,7 @@ describe("JournyClient", () => {
         keySecretHeader
       );
 
-      const client = new JournyClient(validateClient, clientConfig);
+      const client = new Client(validateClient, clientConfig);
       const response: ClientResponseData<ApiKeySpecs> = await client.getApiKeySpecs();
 
       expect(validateClient.getLastRequest()).toEqual(expectedRequest);
@@ -88,7 +86,7 @@ describe("JournyClient", () => {
         keySecretHeader
       );
 
-      const client = new JournyClient(validateClient, clientConfig);
+      const client = new Client(validateClient, clientConfig);
       const response: ClientResponseData<ApiKeySpecs> = await client.getApiKeySpecs();
 
       expect(validateClient.getLastRequest()).toEqual(expectedRequest);
@@ -106,7 +104,7 @@ describe("JournyClient", () => {
         keySecretHeader
       );
 
-      const client = new JournyClient(validateClient, clientConfig);
+      const client = new Client(validateClient, clientConfig);
       const response: ClientResponseData<ApiKeySpecs> = await client.getApiKeySpecs();
 
       expect(validateClient.getLastRequest()).toEqual(expectedRequest);
@@ -140,15 +138,9 @@ describe("JournyClient", () => {
         nonExistingKeySecretHeader
       );
 
-      const client = new JournyClient(validateClient1, clientConfig);
-      const client2 = new JournyClient(
-        validateClient2,
-        nonExistingClientConfig
-      );
-      const client3 = new JournyClient(
-        new HttpClientThatThrows(),
-        clientConfig
-      );
+      const client = new Client(validateClient1, clientConfig);
+      const client2 = new Client(validateClient2, nonExistingClientConfig);
+      const client3 = new Client(new HttpClientThatThrows(), clientConfig);
 
       const response: ClientResponseData<ApiKeySpecs> = await client.getApiKeySpecs();
       expect(validateClient1.getLastRequest()).toEqual(expectedRequest1);
@@ -194,7 +186,7 @@ describe("JournyClient", () => {
         }
       );
 
-      const client = new JournyClient(eventClient, clientConfig);
+      const client = new Client(eventClient, clientConfig);
       const response = await client.trackEvent({
         email: "test@journy.io",
         tag: "tag",
@@ -221,7 +213,7 @@ describe("JournyClient", () => {
         }
       );
 
-      const client = new JournyClient(eventClient, clientConfig);
+      const client = new Client(eventClient, clientConfig);
       const response = await client.trackEvent({
         email: "test@journy.io",
         tag: "tag",
@@ -250,7 +242,7 @@ describe("JournyClient", () => {
         }
       );
 
-      const client = new JournyClient(eventClient, clientConfig);
+      const client = new Client(eventClient, clientConfig);
       const response1 = await client.trackEvent({
         email: "notAnEmail",
         tag: "tag",
@@ -284,7 +276,7 @@ describe("JournyClient", () => {
         }
       );
 
-      const client = new JournyClient(propertiesClient, clientConfig);
+      const client = new Client(propertiesClient, clientConfig);
       const response = await client.trackProperties({
         email: "test@journy.io",
         journeyProperties: {
@@ -314,7 +306,7 @@ describe("JournyClient", () => {
         }
       );
 
-      const client = new JournyClient(propertiesClient, clientConfig);
+      const client = new Client(propertiesClient, clientConfig);
       const response1 = await client.trackProperties({
         email: "test@journy.io",
         journeyProperties: undefined,
@@ -352,7 +344,7 @@ describe("JournyClient", () => {
         keySecretHeader
       );
 
-      const client = new JournyClient(profileClient, clientConfig);
+      const client = new Client(profileClient, clientConfig);
       const response: ClientResponseData<ProfileResponse> = await client.getProfile(
         { email: "test@journy.io" }
       );
@@ -374,7 +366,7 @@ describe("JournyClient", () => {
         keySecretHeader
       );
 
-      const client = new JournyClient(profileClient, clientConfig);
+      const client = new Client(profileClient, clientConfig);
       const response: ClientResponseData<ProfileResponse> = await client.getProfile(
         { email: "" }
       );
@@ -396,7 +388,7 @@ describe("JournyClient", () => {
         keySecretHeader
       );
 
-      const client = new JournyClient(profileClient, clientConfig);
+      const client = new Client(profileClient, clientConfig);
       const response: ClientResponseData<ProfileResponse> = await client.getProfile(
         { email: "test@journy.io" }
       );
@@ -427,7 +419,7 @@ describe("JournyClient", () => {
         keySecretHeader
       );
 
-      const client = new JournyClient(trackingsnippetClient, clientConfig);
+      const client = new Client(trackingsnippetClient, clientConfig);
       const response: ClientResponseData<TrackingSnippetResponse> = await client.getTrackingSnippet(
         {
           domain: "journy.io",
@@ -449,7 +441,7 @@ describe("JournyClient", () => {
         keySecretHeader
       );
 
-      const client = new JournyClient(trackingsnippetClient, clientConfig);
+      const client = new Client(trackingsnippetClient, clientConfig);
       const response: ClientResponseData<TrackingSnippetResponse> = await client.getTrackingSnippet(
         {
           domain: "nonexisting.com",

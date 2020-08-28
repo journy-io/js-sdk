@@ -12,65 +12,21 @@ export interface ClientConfig {
   apiUrl: string;
 }
 
-export interface Client {
-  /**
-   * Track a user event.
-   * @param args The input to track the event
-   * @returns A response stating the event was tracked correctly,
-   * or an error stating the tracking failed (bad parameters, not authorized...).
-   */
-  trackEvent(args: TrackEventArguments): Promise<ClientResponse>;
-
-  /**
-   * Track properties of a user.
-   * @param args The input to track the user properties.
-   * @returns A response stating the properties were tracked correctly,
-   * or an error stating the tracking failed (bad parameters, not authorized...).
-   */
-  trackProperties(args: TrackPropertiesArguments): Promise<ClientResponse>;
-
-  /**
-   * Get the profile of a user.
-   * @param args The parameters to retrieve the profile.
-   * @returns A response with the profile, or an error stating something
-   * failed (not found, not authorized...).
-   */
-  getProfile(
-    args: GetProfileArguments
-  ): Promise<ClientResponseData<ProfileResponse>>;
-
-  /**
-   * Get a tracking snippet.
-   * @param args The parameters to retrieve the Tracking Snippet.
-   * @returns A response with the snippet, or an error stating something
-   * failed (not found, not authorized...).
-   */
-  getTrackingSnippet(
-    args: GetTrackingSnippetArguments
-  ): Promise<ClientResponseData<TrackingSnippetResponse>>;
-
-  /**
-   * Get specs about the API Key such as the permissions and the property-roup-name.
-   * @returns The Api Key Specs.
-   */
-  getApiKeySpecs(): Promise<ClientResponseData<ApiKeySpecs>>;
-}
-
 /**
  * Creates a Client.
  * @param clientConfig The configuration for the Client.
  */
-export function createJournyClient(clientConfig: ClientConfig): Client {
+export function createClient(clientConfig: ClientConfig): Client {
   const config = new Config();
-  return new JournyClient(config.getHttpClient(), clientConfig);
+  return new Client(config.getHttpClient(), clientConfig);
 }
 
-export class JournyClient implements Client {
+export class Client {
   constructor(
     private readonly httpClient: HttpClient,
     private readonly clientConfig: ClientConfig
   ) {
-    JournyClient.validateClientConfig(clientConfig);
+    Client.validateClientConfig(clientConfig);
   }
 
   private createURL(path: string) {
@@ -105,6 +61,12 @@ export class JournyClient implements Client {
     }
   }
 
+  /**
+   * Track a user event.
+   * @param args The input to track the event
+   * @returns A response stating the event was tracked correctly,
+   * or an error stating the tracking failed (bad parameters, not authorized...).
+   */
   async trackEvent(args: TrackEventArguments): Promise<ClientResponse> {
     const request = new HttpRequest(
       this.createURL(`/journeys/events`),
@@ -130,10 +92,16 @@ export class JournyClient implements Client {
         ),
       };
     } catch (error) {
-      return JournyClient.handleError(error);
+      return Client.handleError(error);
     }
   }
 
+  /**
+   * Track properties of a user.
+   * @param args The input to track the user properties.
+   * @returns A response stating the properties were tracked correctly,
+   * or an error stating the tracking failed (bad parameters, not authorized...).
+   */
   async trackProperties(
     args: TrackPropertiesArguments
   ): Promise<ClientResponse> {
@@ -157,10 +125,16 @@ export class JournyClient implements Client {
         ),
       };
     } catch (error) {
-      return JournyClient.handleError(error);
+      return Client.handleError(error);
     }
   }
 
+  /**
+   * Get the profile of a user.
+   * @param args The parameters to retrieve the profile.
+   * @returns A response with the profile, or an error stating something
+   * failed (not found, not authorized...).
+   */
   async getProfile(
     args: GetProfileArguments
   ): Promise<ClientResponseData<ProfileResponse>> {
@@ -184,10 +158,16 @@ export class JournyClient implements Client {
         },
       };
     } catch (error) {
-      return JournyClient.handleError(error);
+      return Client.handleError(error);
     }
   }
 
+  /**
+   * Get a tracking snippet.
+   * @param args The parameters to retrieve the Tracking Snippet.
+   * @returns A response with the snippet, or an error stating something
+   * failed (not found, not authorized...).
+   */
   async getTrackingSnippet(
     args: GetTrackingSnippetArguments
   ): Promise<ClientResponseData<TrackingSnippetResponse>> {
@@ -212,10 +192,14 @@ export class JournyClient implements Client {
         },
       };
     } catch (error) {
-      return JournyClient.handleError(error);
+      return Client.handleError(error);
     }
   }
 
+  /**
+   * Get specs about the API Key such as the permissions and the property-roup-name.
+   * @returns The Api Key Specs.
+   */
   async getApiKeySpecs(): Promise<ClientResponseData<ApiKeySpecs>> {
     const request = new HttpRequest(
       this.createURL(`/validate`),
@@ -233,7 +217,7 @@ export class JournyClient implements Client {
         data: specs,
       };
     } catch (error) {
-      return JournyClient.handleError(error);
+      return Client.handleError(error);
     }
   }
 }
