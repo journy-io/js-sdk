@@ -345,7 +345,9 @@ describe("JournyClient", () => {
         )
       );
       const expectedResponse = new HttpRequest(
-        new URL("https://api.test.com/journeys/profiles?email=test@journy.io"),
+        new URL(
+          "https://api.test.com/journeys/profiles?email=test%40journy.io"
+        ),
         "GET",
         keySecretHeader
       );
@@ -387,7 +389,9 @@ describe("JournyClient", () => {
     it("correctly fails when not authorized", async () => {
       const profileClient = new HttpClientMatch(notAuthorizedResponse);
       const expectedRequest = new HttpRequest(
-        new URL("https://api.test.com/journeys/profiles?email=test@journy.io"),
+        new URL(
+          "https://api.test.com/journeys/profiles?email=test%40journy.io"
+        ),
         "GET",
         keySecretHeader
       );

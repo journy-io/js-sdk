@@ -166,7 +166,7 @@ export class JournyClient implements Client {
   ): Promise<ClientResponseData<ProfileResponse>> {
     const { email } = args;
     const request = new HttpRequest(
-      this.createURL(`/journeys/profiles?email=${encodeURI(email)}`),
+      this.createURL(`/journeys/profiles?email=${encodeURIComponent(email)}`),
       "GET",
       new HttpHeaders({ "x-api-key": this.clientConfig.apiKeySecret })
     );
@@ -193,7 +193,7 @@ export class JournyClient implements Client {
   ): Promise<ClientResponseData<TrackingSnippetResponse>> {
     const { domain } = args;
     const request = new HttpRequest(
-      this.createURL(`/tracking/snippet?domain=${encodeURI(domain)}`),
+      this.createURL(`/tracking/snippet?domain=${encodeURIComponent(domain)}`),
       "GET",
       new HttpHeaders({ "x-api-key": this.clientConfig.apiKeySecret })
     );
