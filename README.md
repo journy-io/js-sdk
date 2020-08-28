@@ -138,29 +138,32 @@ interface args {
 
 ### Response types
 
-> Note: instead of `await` (as in the examples above) you can also use `.then()` to act on the responses.
+> Note: instead of `await` (as in the examples above) you can also use `.then()` to interact with the responses.
 
-The basic method-response type is the `ClientResponse`. The `ClientResponse` interface is:
+The basic method-response type is the `Result<T>` whereas `T` is the type of the data if the response should provide data. 
 
 ```typescript
-interface ClientResponse {
-  success: boolean;
+export type Result<T> = Success<T> | Error;
+```
+
+```typescript
+export interface Success<T> {
+  success: true;
   callsRemaining: number | undefined;
-  error?: JourneyClientError;
+  data: T;
+}
+
+export interface Error {
+  success: false;
+  callsRemaining: number | undefined;
+  error: JourneyClientError;
 }
 ```
 
-The `success`-field states if the method call succeeded. The `callsRemaining` states the amount of requests the API Key has left (more information about the Rate-Limiting can be found in our API documentation). The `error?` field contains the error that occurred if the method call was not successful.
+The `success`-field states if the method-call succeeded. The `callsRemaining`-field states the amount of requests the API Key still can perform in the current timeframe (more information about the Rate-Limiting can be found in our [API documentation](https://journy-io.readme.io/docs).
 
-If the response includes response data, then the `ClientResponseData`-interface is used:
-
-```typescript
-interface ClientResponseData<T> extends ClientResponse {
-  data?: T;
-}
-```
-
-which also includes a data field. When an error occurs (and the method call is thus unsuccessful) the data field will be undefined.
+In case the `success`-field is `true`, the return-type will be `Succes<T>` and the `data`-field will contain the result data.
+In case the `success`-field is `false`, the return-type will be `Error` and the `error`-field will contain the error.
 
 ## 🔑 Account creation and API Key management
 

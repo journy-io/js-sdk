@@ -12,6 +12,9 @@ export interface ClientConfig {
   apiUrl: string;
 }
 
+const isBrowser =
+  typeof window !== "undefined" && typeof window.document !== "undefined";
+
 /**
  * Creates a Client.
  * @param clientConfig The configuration for the Client.
@@ -26,6 +29,11 @@ export class Client {
     private readonly httpClient: HttpClient,
     private readonly clientConfig: ClientConfig
   ) {
+    if (isBrowser) {
+      throw new Error(
+        `You can't use our client in the browser, because you may leak your API Key secret.`
+      );
+    }
     Client.validateClientConfig(clientConfig);
   }
 
@@ -33,13 +41,12 @@ export class Client {
     return new URL(this.clientConfig.apiUrl + path);
   }
 
-  private static handleError(error: Error): ClientResponse {
+  private static handleError(error: Error): Error {
     if (error instanceof HttpRequestError) {
+      const remaining = error.getHeaders().byName("X-RateLimit-Remaining");
       return {
         success: false,
-        callsRemaining: parseInt(
-          error.getHeaders().byName("X-RateLimit-Remaining")
-        ),
+        callsRemaining: remaining ? parseInt(remaining) : undefined,
         error: statusCodeToError(error.getStatusCode()),
       };
     }
@@ -67,7 +74,7 @@ export class Client {
    * @returns A response stating the event was tracked correctly,
    * or an error stating the tracking failed (bad parameters, not authorized...).
    */
-  async trackEvent(args: TrackEventArguments): Promise<ClientResponse> {
+  async trackEvent(args: TrackEventArguments): Promise<Result<undefined>> {
     const request = new HttpRequest(
       this.createURL(`/journeys/events`),
       "POST",
@@ -85,11 +92,11 @@ export class Client {
     );
     try {
       const response = await this.httpClient.send(request);
+      const remaining = response.getHeaders().byName("X-RateLimit-Remaining");
       return {
         success: true,
-        callsRemaining: parseInt(
-          response.getHeaders().byName("X-RateLimit-Remaining")
-        ),
+        callsRemaining: remaining ? parseInt(remaining) : undefined,
+        data: undefined,
       };
     } catch (error) {
       return Client.handleError(error);
@@ -104,7 +111,7 @@ export class Client {
    */
   async trackProperties(
     args: TrackPropertiesArguments
-  ): Promise<ClientResponse> {
+  ): Promise<Result<undefined>> {
     const request = new HttpRequest(
       this.createURL(`/journeys/properties`),
       "POST",
@@ -118,11 +125,11 @@ export class Client {
     );
     try {
       const response = await this.httpClient.send(request);
+      const remaining = response.getHeaders().byName("X-RateLimit-Remaining");
       return {
         success: true,
-        callsRemaining: parseInt(
-          response.getHeaders().byName("X-RateLimit-Remaining")
-        ),
+        callsRemaining: remaining ? parseInt(remaining) : undefined,
+        data: undefined,
       };
     } catch (error) {
       return Client.handleError(error);
@@ -137,7 +144,7 @@ export class Client {
    */
   async getProfile(
     args: GetProfileArguments
-  ): Promise<ClientResponseData<ProfileResponse>> {
+  ): Promise<Result<ProfileResponse>> {
     const { email } = args;
     const request = new HttpRequest(
       this.createURL(`/journeys/profiles?email=${encodeURIComponent(email)}`),
@@ -147,11 +154,10 @@ export class Client {
     try {
       const response = await this.httpClient.send(request);
       const profile: Profile = JSON.parse(response.getBody());
+      const remaining = response.getHeaders().byName("X-RateLimit-Remaining");
       return {
         success: true,
-        callsRemaining: parseInt(
-          response.getHeaders().byName("X-RateLimit-Remaining")
-        ),
+        callsRemaining: remaining ? parseInt(remaining) : undefined,
         data: {
           email: email,
           profile: profile,
@@ -170,7 +176,7 @@ export class Client {
    */
   async getTrackingSnippet(
     args: GetTrackingSnippetArguments
-  ): Promise<ClientResponseData<TrackingSnippetResponse>> {
+  ): Promise<Result<TrackingSnippetResponse>> {
     const { domain } = args;
     const request = new HttpRequest(
       this.createURL(`/tracking/snippet?domain=${encodeURIComponent(domain)}`),
@@ -180,12 +186,11 @@ export class Client {
     try {
       const response = await this.httpClient.send(request);
       const parsed = JSON.parse(response.getBody());
+      const remaining = response.getHeaders().byName("X-RateLimit-Remaining");
       const snippet = parsed.snippet;
       return {
         success: true,
-        callsRemaining: parseInt(
-          response.getHeaders().byName("X-RateLimit-Remaining")
-        ),
+        callsRemaining: remaining ? parseInt(remaining) : undefined,
         data: {
           domain: domain,
           snippet: snippet,
@@ -200,7 +205,7 @@ export class Client {
    * Get specs about the API Key such as the permissions and the property-roup-name.
    * @returns The Api Key Specs.
    */
-  async getApiKeySpecs(): Promise<ClientResponseData<ApiKeySpecs>> {
+  async getApiKeySpecs(): Promise<Result<ApiKeySpecs>> {
     const request = new HttpRequest(
       this.createURL(`/validate`),
       "GET",
@@ -209,11 +214,10 @@ export class Client {
     try {
       const response = await this.httpClient.send(request);
       const specs: ApiKeySpecs = JSON.parse(response.getBody());
+      const remaining = response.getHeaders().byName("X-RateLimit-Remaining");
       return {
         success: true,
-        callsRemaining: parseInt(
-          response.getHeaders().byName("X-RateLimit-Remaining")
-        ),
+        callsRemaining: remaining ? parseInt(remaining) : undefined,
         data: specs,
       };
     } catch (error) {
@@ -263,14 +267,18 @@ function stringifyProperties(properties: Properties) {
   return newProperties;
 }
 
-export interface ClientResponse {
-  success: boolean;
+export type Result<T> = Success<T> | Error;
+
+export interface Success<T> {
+  success: true;
   callsRemaining: number | undefined;
-  error?: JourneyClientError;
+  data: T;
 }
 
-export interface ClientResponseData<T> extends ClientResponse {
-  data?: T;
+export interface Error {
+  success: false;
+  callsRemaining: number | undefined;
+  error: JourneyClientError;
 }
 
 export interface ApiKeySpecs {

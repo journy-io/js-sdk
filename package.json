@@ -43,8 +43,9 @@
     "collectCoverage": true,
     "testEnvironment": "node"
   },
-  "dependencies": {
-    "axios": "0.20.0"
+  "dependencies": {},
+  "peerDependencies": {
+    "axios": "^0.20.0"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "15.0.0",
