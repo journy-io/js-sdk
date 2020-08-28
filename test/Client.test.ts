@@ -210,6 +210,12 @@ describe("JournyClient", () => {
           campaign: "campaign",
           source: "source",
           recordedAt: "2019-01-01T00:00:00.000Z",
+          properties: {
+            hasDogs: "2",
+            boughtDog: "2020-08-27T12:08:21.000Z",
+            likesDog: "true",
+            firstDogName: "Journy",
+          },
         }
       );
 
@@ -220,6 +226,12 @@ describe("JournyClient", () => {
         campaign: "campaign",
         source: "source",
         recordedAt: new Date("2019-01-01T00:00:00.000Z"),
+        properties: {
+          likesDog: true,
+          hasDogs: 2,
+          boughtDog: new Date("2020-08-27T12:08:21+00:00"),
+          firstDogName: "Journy",
+        },
       });
 
       expect(eventClient.getLastRequest()).toEqual(expectedRequest);
@@ -267,7 +279,7 @@ describe("JournyClient", () => {
         new HttpHeaders({ "x-api-key": "key-secret" }),
         {
           email: "test@journy.io",
-          journeyProperties: {
+          properties: {
             hasDogs: "2",
             boughtDog: "2020-08-27T12:08:21.000Z",
             likesDog: "true",
@@ -279,7 +291,7 @@ describe("JournyClient", () => {
       const client = new Client(propertiesClient, clientConfig);
       const response = await client.trackProperties({
         email: "test@journy.io",
-        journeyProperties: {
+        properties: {
           likesDog: true,
           hasDogs: 2,
           boughtDog: new Date("2020-08-27T12:08:21+00:00"),
@@ -302,14 +314,14 @@ describe("JournyClient", () => {
         new HttpHeaders({ "x-api-key": "key-secret" }),
         {
           email: "test@journy.io",
-          journeyProperties: undefined,
+          properties: undefined,
         }
       );
 
       const client = new Client(propertiesClient, clientConfig);
       const response1 = await client.trackProperties({
         email: "test@journy.io",
-        journeyProperties: undefined,
+        properties: undefined,
       });
 
       expect(propertiesClient.getLastRequest()).toEqual(expectedRequest);

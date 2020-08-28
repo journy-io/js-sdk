@@ -21,7 +21,7 @@ yarn add @journy-io/sdk
 To start, first import the client.
 
 ```typescript
-import { Client } from "@journy-io/sdk";
+import { Client, createClient } from "@journy-io/sdk";
 ```
 
 ### Configuration and Client creation
@@ -41,7 +41,14 @@ const config = {
 ```
 
 ```typescript
-const client: Client = createJournyClient(config);
+const client: Client = createClient(config);
+```
+
+or if you want to use a custom [HttpClient](/lib/HttpClient.ts#L70)-implementation you can create a client as follows:
+
+```typescript
+const httpClient: HttpClient = new OwnHttpClientImplementation();
+const client: Client = new Client(httpClient, config);
 ```
 
 ### Methods
@@ -51,7 +58,7 @@ The Client interface includes five methods.
 #### init
 
 ```typescript
-getApiKeySpecs();
+await client.getApiKeySpecs();
 ```
 
 The response of the method-call includes the *property-group-name* configured in the [journy.io](https://journy.io) application and a list of *permissions* the API Key has.
@@ -60,7 +67,7 @@ The response of the method-call includes the *property-group-name* configured in
 #### trackEvent
 
 ```typescript
-trackEvent(args);
+await client.trackEvent(args);
 ```
 
 This method can be used to track a user event.
@@ -81,7 +88,7 @@ interface args {
 #### trackProperties
 
 ```typescript
-trackProperties(args);
+await client.trackProperties(args);
 ```
 
 This method can be used to track user properties.
@@ -98,7 +105,7 @@ interface args {
 #### getProfile
 
 ```typescript
-getProfile(args);
+await client.getProfile(args);
 ```
 
 This method can be used to retrieve a profile of a user.
@@ -116,7 +123,7 @@ The response of the method-call will include (if existing) the profile of the us
 #### getTrackingSnippet
 
 ```typescript
-getTrackingSnippet(args);
+await client.getTrackingSnippet(args);
 ```
 
 This method will retrieve a tracking snippet of a specific domain.
@@ -130,6 +137,8 @@ interface args {
 ``` 
 
 ### Response types
+
+> Note: instead of `await` (as in the examples above) you can also use `.then()` to act on the responses.
 
 The basic method-response type is the `ClientResponse`. The `ClientResponse` interface is:
 

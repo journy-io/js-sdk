@@ -78,8 +78,8 @@ export class Client {
         campaign: args.campaign,
         source: args.source,
         recordedAt: args.recordedAt ? args.recordedAt.toISOString() : undefined,
-        journeyProperties: args.journeyProperties
-          ? stringifyProperties(args.journeyProperties)
+        properties: args.properties
+          ? stringifyProperties(args.properties)
           : undefined,
       }
     );
@@ -111,8 +111,8 @@ export class Client {
       new HttpHeaders({ "x-api-key": this.clientConfig.apiKeySecret }),
       {
         email: args.email,
-        journeyProperties: args.journeyProperties
-          ? stringifyProperties(args.journeyProperties)
+        properties: args.properties
+          ? stringifyProperties(args.properties)
           : undefined,
       }
     );
@@ -284,12 +284,12 @@ export interface TrackEventArguments {
   campaign: string;
   source: string;
   recordedAt?: Date;
-  journeyProperties?: Properties;
+  properties?: Properties;
 }
 
 export interface TrackPropertiesArguments {
   email: string;
-  journeyProperties: Properties;
+  properties: Properties;
 }
 
 export interface GetProfileArguments {
