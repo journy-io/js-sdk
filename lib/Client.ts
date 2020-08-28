@@ -212,7 +212,6 @@ export class JournyClient implements Client {
         },
       };
     } catch (error) {
-      console.log(error);
       return JournyClient.handleError(error);
     }
   }
