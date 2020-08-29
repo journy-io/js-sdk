@@ -33,5 +33,6 @@ jobs:
           node-version: ${{ matrix.node-version }}
 
       - run: yarn install
+      - run: yarn add axios --peer
       - run: yarn lint
       - run: yarn test
