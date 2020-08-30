@@ -53,9 +53,7 @@ const client: Client = new Client(httpClient, config);
 
 ### Methods
 
-The Client interface includes five methods.
-
-#### init
+#### getApiKeySpecs
 
 ```typescript
 await client.getApiKeySpecs();
