@@ -21,7 +21,7 @@ yarn add @journy-io/sdk
 To start, first import the client.
 
 ```typescript
-import { Client } from "@journy-io/sdk";
+import { Client, createClient } from "@journy-io/sdk";
 ```
 
 ### Configuration and Client creation
@@ -41,7 +41,14 @@ const config = {
 ```
 
 ```typescript
-const client: Client = createJournyClient(config);
+const client: Client = createClient(config);
+```
+
+or if you want to use a custom [HttpClient](/lib/HttpClient.ts#L70)-implementation you can create a client as follows:
+
+```typescript
+const httpClient: HttpClient = new OwnHttpClientImplementation();
+const client: Client = new Client(httpClient, config);
 ```
 
 ### Methods
@@ -51,7 +58,7 @@ The Client interface includes five methods.
 #### init
 
 ```typescript
-getApiKeySpecs();
+await client.getApiKeySpecs();
 ```
 
 The response of the method-call includes the *property-group-name* configured in the [journy.io](https://journy.io) application and a list of *permissions* the API Key has.
@@ -60,7 +67,7 @@ The response of the method-call includes the *property-group-name* configured in
 #### trackEvent
 
 ```typescript
-trackEvent(args);
+await client.trackEvent(args);
 ```
 
 This method can be used to track a user event.
@@ -81,7 +88,7 @@ interface args {
 #### trackProperties
 
 ```typescript
-trackProperties(args);
+await client.trackProperties(args);
 ```
 
 This method can be used to track user properties.
@@ -98,7 +105,7 @@ interface args {
 #### getProfile
 
 ```typescript
-getProfile(args);
+await client.getProfile(args);
 ```
 
 This method can be used to retrieve a profile of a user.
@@ -116,7 +123,7 @@ The response of the method-call will include (if existing) the profile of the us
 #### getTrackingSnippet
 
 ```typescript
-getTrackingSnippet(args);
+await client.getTrackingSnippet(args);
 ```
 
 This method will retrieve a tracking snippet of a specific domain.
@@ -131,27 +138,32 @@ interface args {
 
 ### Response types
 
-The basic method-response type is the `ClientResponse`. The `ClientResponse` interface is:
+> Note: instead of `await` (as in the examples above) you can also use `.then()` to interact with the responses.
+
+The basic method-response type is the `Result<T>` whereas `T` is the type of the data if the response should provide data. 
 
 ```typescript
-interface ClientResponse {
-  success: boolean;
+export type Result<T> = Success<T> | Error;
+```
+
+```typescript
+export interface Success<T> {
+  success: true;
   callsRemaining: number | undefined;
-  error?: JourneyClientError;
+  data: T;
+}
+
+export interface Error {
+  success: false;
+  callsRemaining: number | undefined;
+  error: JourneyClientError;
 }
 ```
 
-The `success`-field states if the method call succeeded. The `callsRemaining` states the amount of requests the API Key has left (more information about the Rate-Limiting can be found in our API documentation). The `error?` field contains the error that occurred if the method call was not successful.
+The `success`-field states if the method-call succeeded. The `callsRemaining`-field states the amount of requests the API Key still can perform in the current timeframe (more information about the Rate-Limiting can be found in our [API documentation](https://journy-io.readme.io/docs).
 
-If the response includes response data, then the `ClientResponseData`-interface is used:
-
-```typescript
-interface ClientResponseData<T> extends ClientResponse {
-  data?: T;
-}
-```
-
-which also includes a data field. When an error occurs (and the method call is thus unsuccessful) the data field will be undefined.
+In case the `success`-field is `true`, the return-type will be `Succes<T>` and the `data`-field will contain the result data.
+In case the `success`-field is `false`, the return-type will be `Error` and the `error`-field will contain the error.
 
 ## 🔑 Account creation and API Key management
 

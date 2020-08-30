@@ -169,7 +169,7 @@ export class HttpClientFixed implements HttpClient {
 }
 
 export class HttpClientMatch implements HttpClient {
-  private lastRequest: HttpRequest;
+  private lastRequest: HttpRequest | undefined;
 
   constructor(private response: HttpResponse) {}
 

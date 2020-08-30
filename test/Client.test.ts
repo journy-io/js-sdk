@@ -1,10 +1,10 @@
 import {
   ApiKeySpecs,
   Client,
-  ClientResponseData,
   createClient,
   JourneyClientError,
   ProfileResponse,
+  Result,
   TrackingSnippetResponse,
 } from "../lib/Client";
 import {
@@ -34,7 +34,7 @@ describe("createJournyClient", () => {
   });
 });
 
-describe("JournyClient", () => {
+describe("Client", () => {
   const clientConfig = {
     apiKeySecret: "key-secret",
     apiUrl: "https://api.test.com",
@@ -58,7 +58,6 @@ describe("JournyClient", () => {
   const notAuthorizedResponse = new HttpResponse(401, rateLimitHeader);
   const badRequestResponse = new HttpResponse(400, rateLimitHeader);
   const createdResponse = new HttpResponse(201, rateLimitHeader);
-
   describe("getApiKeySpecs", () => {
     it("correctly errors when too many requests were made", async () => {
       const validateClient = new HttpClientMatch(tooManyRequestsResponse);
@@ -69,14 +68,15 @@ describe("JournyClient", () => {
       );
 
       const client = new Client(validateClient, clientConfig);
-      const response: ClientResponseData<ApiKeySpecs> = await client.getApiKeySpecs();
+      const response = await client.getApiKeySpecs();
 
       expect(validateClient.getLastRequest()).toEqual(expectedRequest);
       expect(response).toBeDefined();
       expect(response.success).toBeFalsy();
       expect(response.callsRemaining).toEqual(0);
-      expect(response.error).toEqual(JourneyClientError.TooManyRequests);
-      expect(response.data).toBeUndefined();
+      if (!response.success) {
+        expect(response.error).toEqual(JourneyClientError.TooManyRequests);
+      }
     });
     it("correctly perseveres an unknown error", async () => {
       const validateClient = new HttpClientMatch(unknownErrorResponse);
@@ -87,14 +87,15 @@ describe("JournyClient", () => {
       );
 
       const client = new Client(validateClient, clientConfig);
-      const response: ClientResponseData<ApiKeySpecs> = await client.getApiKeySpecs();
+      const response = await client.getApiKeySpecs();
 
       expect(validateClient.getLastRequest()).toEqual(expectedRequest);
       expect(response).toBeDefined();
       expect(response.success).toBeFalsy();
       expect(response.callsRemaining).toEqual(5000);
-      expect(response.error).toEqual(JourneyClientError.UnknownError);
-      expect(response.data).toBeUndefined();
+      if (!response.success) {
+        expect(response.error).toEqual(JourneyClientError.UnknownError);
+      }
     });
     it("correctly perseveres a server error", async () => {
       const validateClient = new HttpClientMatch(serverErrorResponse);
@@ -105,14 +106,15 @@ describe("JournyClient", () => {
       );
 
       const client = new Client(validateClient, clientConfig);
-      const response: ClientResponseData<ApiKeySpecs> = await client.getApiKeySpecs();
+      const response = await client.getApiKeySpecs();
 
       expect(validateClient.getLastRequest()).toEqual(expectedRequest);
       expect(response).toBeDefined();
       expect(response.success).toBeFalsy();
       expect(response.callsRemaining).toEqual(5000);
-      expect(response.error).toEqual(JourneyClientError.ServerError);
-      expect(response.data).toBeUndefined();
+      if (!response.success) {
+        expect(response.error).toEqual(JourneyClientError.ServerError);
+      }
     });
     it("should correctly get api key specs", async () => {
       const validateClient1 = new HttpClientMatch(
@@ -142,33 +144,36 @@ describe("JournyClient", () => {
       const client2 = new Client(validateClient2, nonExistingClientConfig);
       const client3 = new Client(new HttpClientThatThrows(), clientConfig);
 
-      const response: ClientResponseData<ApiKeySpecs> = await client.getApiKeySpecs();
+      const response = await client.getApiKeySpecs();
       expect(validateClient1.getLastRequest()).toEqual(expectedRequest1);
       expect(response).toBeDefined();
       expect(response.success).toBeTruthy();
       expect(response.callsRemaining).toEqual(5000);
-      expect(response.error).toBeUndefined();
-      expect(response.data.permissions).toEqual([
-        "TrackData",
-        "GetTrackingSnippet",
-        "ReadUserProfile",
-      ]);
-      expect(response.data.propertyGroupName).toEqual("test");
+      if (response.success) {
+        expect(response.data.permissions).toEqual([
+          "TrackData",
+          "GetTrackingSnippet",
+          "ReadUserProfile",
+        ]);
+        expect(response.data.propertyGroupName).toEqual("test");
+      }
 
-      const response2: ClientResponseData<ApiKeySpecs> = await client2.getApiKeySpecs();
+      const response2 = await client2.getApiKeySpecs();
       expect(validateClient2.getLastRequest()).toEqual(expectedRequest2);
       expect(response2).toBeDefined();
       expect(response2.success).toBeFalsy();
       expect(response2.callsRemaining).toEqual(5000);
-      expect(response2.error).toEqual(JourneyClientError.NotFoundError);
-      expect(response2.data).toBeUndefined();
+      if (response2.success === false) {
+        expect(response2.error).toEqual(JourneyClientError.NotFoundError);
+      }
 
-      const response3: ClientResponseData<ApiKeySpecs> = await client3.getApiKeySpecs();
+      const response3 = await client3.getApiKeySpecs();
       expect(response3).toBeDefined();
       expect(response3.success).toBeFalsy();
-      expect(response3.error).toEqual(JourneyClientError.UnknownError);
+      if (!response3.success) {
+        expect(response3.error).toEqual(JourneyClientError.UnknownError);
+      }
       expect(response3.callsRemaining).toBeUndefined();
-      expect(response3.data).toBeUndefined();
     });
   });
   describe("trackEvent", () => {
@@ -193,10 +198,10 @@ describe("JournyClient", () => {
         campaign: "campaign",
         source: "source",
       });
+
       expect(response).toBeDefined();
       expect(response.success).toBeTruthy();
       expect(response.callsRemaining).toEqual(5000);
-      expect(response.error).toBeUndefined();
     });
     it("correctly handles dates", async () => {
       const eventClient = new HttpClientMatch(createdResponse);
@@ -210,6 +215,12 @@ describe("JournyClient", () => {
           campaign: "campaign",
           source: "source",
           recordedAt: "2019-01-01T00:00:00.000Z",
+          properties: {
+            hasDogs: "2",
+            boughtDog: "2020-08-27T12:08:21.000Z",
+            likesDog: "true",
+            firstDogName: "Journy",
+          },
         }
       );
 
@@ -220,13 +231,18 @@ describe("JournyClient", () => {
         campaign: "campaign",
         source: "source",
         recordedAt: new Date("2019-01-01T00:00:00.000Z"),
+        properties: {
+          likesDog: true,
+          hasDogs: 2,
+          boughtDog: new Date("2020-08-27T12:08:21+00:00"),
+          firstDogName: "Journy",
+        },
       });
 
       expect(eventClient.getLastRequest()).toEqual(expectedRequest);
       expect(response).toBeDefined();
       expect(response.success).toBeTruthy();
       expect(response.callsRemaining).toEqual(5000);
-      expect(response.error).toBeUndefined();
     });
     it("correctly states when the input is invalid", async () => {
       const eventClient = new HttpClientMatch(badRequestResponse);
@@ -254,8 +270,10 @@ describe("JournyClient", () => {
       expect(response1).toBeDefined();
       expect(response1.success).toBeFalsy();
       expect(response1.callsRemaining).toEqual(5000);
-      expect(response1.error).toBeDefined();
-      expect(response1.error).toEqual(JourneyClientError.BadArgumentsError);
+      if (!response1.success) {
+        expect(response1.error).toBeDefined();
+        expect(response1.error).toEqual(JourneyClientError.BadArgumentsError);
+      }
     });
   });
   describe("trackProperties", () => {
@@ -267,7 +285,7 @@ describe("JournyClient", () => {
         new HttpHeaders({ "x-api-key": "key-secret" }),
         {
           email: "test@journy.io",
-          journeyProperties: {
+          properties: {
             hasDogs: "2",
             boughtDog: "2020-08-27T12:08:21.000Z",
             likesDog: "true",
@@ -279,7 +297,7 @@ describe("JournyClient", () => {
       const client = new Client(propertiesClient, clientConfig);
       const response = await client.trackProperties({
         email: "test@journy.io",
-        journeyProperties: {
+        properties: {
           likesDog: true,
           hasDogs: 2,
           boughtDog: new Date("2020-08-27T12:08:21+00:00"),
@@ -289,10 +307,8 @@ describe("JournyClient", () => {
 
       expect(propertiesClient.getLastRequest()).toEqual(expectedRequest);
       expect(response).toBeDefined();
-      expect(response.error).toBeUndefined();
       expect(response.success).toBeTruthy();
       expect(response.callsRemaining).toEqual(5000);
-      expect(response.error).toBeUndefined();
     });
     it("correctly shows when the input parameters are invalid", async () => {
       const propertiesClient = new HttpClientMatch(badRequestResponse);
@@ -302,22 +318,24 @@ describe("JournyClient", () => {
         new HttpHeaders({ "x-api-key": "key-secret" }),
         {
           email: "test@journy.io",
-          journeyProperties: undefined,
+          properties: {},
         }
       );
 
       const client = new Client(propertiesClient, clientConfig);
       const response1 = await client.trackProperties({
         email: "test@journy.io",
-        journeyProperties: undefined,
+        properties: {},
       });
 
       expect(propertiesClient.getLastRequest()).toEqual(expectedRequest);
       expect(response1).toBeDefined();
       expect(response1.success).toBeFalsy();
       expect(response1.callsRemaining).toEqual(5000);
-      expect(response1.error).toBeDefined();
-      expect(response1.error).toEqual(JourneyClientError.BadArgumentsError);
+      if (!response1.success) {
+        expect(response1.error).toBeDefined();
+        expect(response1.error).toEqual(JourneyClientError.BadArgumentsError);
+      }
     });
   });
   describe("getProfile", () => {
@@ -345,18 +363,17 @@ describe("JournyClient", () => {
       );
 
       const client = new Client(profileClient, clientConfig);
-      const response: ClientResponseData<ProfileResponse> = await client.getProfile(
-        { email: "test@journy.io" }
-      );
+      const response = await client.getProfile({ email: "test@journy.io" });
 
       expect(profileClient.getLastRequest()).toEqual(expectedResponse);
       expect(response).toBeDefined();
       expect(response.success).toBeTruthy();
       expect(response.callsRemaining).toEqual(5000);
-      expect(response.error).toBeUndefined();
-      expect(response.data).toBeDefined();
-      expect(response.data.email).toEqual("test@journy.io");
-      expect(response.data.profile).toEqual(profile);
+      if (response.success) {
+        expect(response.data).toBeDefined();
+        expect(response.data.email).toEqual("test@journy.io");
+        expect(response.data.profile).toEqual(profile);
+      }
     });
     it("correctly fails with incorrect arguments", async () => {
       const profileClient = new HttpClientMatch(badRequestResponse);
@@ -367,16 +384,15 @@ describe("JournyClient", () => {
       );
 
       const client = new Client(profileClient, clientConfig);
-      const response: ClientResponseData<ProfileResponse> = await client.getProfile(
-        { email: "" }
-      );
+      const response = await client.getProfile({ email: "" });
 
       expect(profileClient.getLastRequest()).toEqual(expectedRequest);
       expect(response).toBeDefined();
       expect(response.success).toBeFalsy();
       expect(response.callsRemaining).toEqual(5000);
-      expect(response.error).toEqual(JourneyClientError.BadArgumentsError);
-      expect(response.data).toBeUndefined();
+      if (!response.success) {
+        expect(response.error).toEqual(JourneyClientError.BadArgumentsError);
+      }
     });
     it("correctly fails when not authorized", async () => {
       const profileClient = new HttpClientMatch(notAuthorizedResponse);
@@ -389,16 +405,15 @@ describe("JournyClient", () => {
       );
 
       const client = new Client(profileClient, clientConfig);
-      const response: ClientResponseData<ProfileResponse> = await client.getProfile(
-        { email: "test@journy.io" }
-      );
+      const response = await client.getProfile({ email: "test@journy.io" });
 
       expect(profileClient.getLastRequest()).toEqual(expectedRequest);
       expect(response).toBeDefined();
       expect(response.success).toBeFalsy();
       expect(response.callsRemaining).toEqual(5000);
-      expect(response.error).toEqual(JourneyClientError.UnauthorizedError);
-      expect(response.data).toBeUndefined();
+      if (!response.success) {
+        expect(response.error).toEqual(JourneyClientError.UnauthorizedError);
+      }
     });
   });
   describe("getTrackingSnippet", () => {
@@ -420,18 +435,18 @@ describe("JournyClient", () => {
       );
 
       const client = new Client(trackingsnippetClient, clientConfig);
-      const response: ClientResponseData<TrackingSnippetResponse> = await client.getTrackingSnippet(
-        {
-          domain: "journy.io",
-        }
-      );
+      const response = await client.getTrackingSnippet({
+        domain: "journy.io",
+      });
 
       expect(trackingsnippetClient.getLastRequest()).toEqual(expectedRequest);
       expect(response).toBeDefined();
       expect(response.success).toBeTruthy();
       expect(response.callsRemaining).toEqual(5000);
-      expect(response.data.domain).toEqual("journy.io");
-      expect(response.data.snippet).toBeDefined();
+      if (response.success) {
+        expect(response.data.domain).toEqual("journy.io");
+        expect(response.data.snippet).toBeDefined();
+      }
     });
     it("correctly notifies a domain not being found", async () => {
       const trackingsnippetClient = new HttpClientMatch(notFoundResponse);
@@ -442,17 +457,16 @@ describe("JournyClient", () => {
       );
 
       const client = new Client(trackingsnippetClient, clientConfig);
-      const response: ClientResponseData<TrackingSnippetResponse> = await client.getTrackingSnippet(
-        {
-          domain: "nonexisting.com",
-        }
-      );
+      const response = await client.getTrackingSnippet({
+        domain: "nonexisting.com",
+      });
       expect(trackingsnippetClient.getLastRequest()).toEqual(expectedRequest);
       expect(response).toBeDefined();
       expect(response.success).toBeFalsy();
       expect(response.callsRemaining).toEqual(5000);
-      expect(response.error).toEqual(JourneyClientError.NotFoundError);
-      expect(response.data).toBeUndefined();
+      if (!response.success) {
+        expect(response.error).toEqual(JourneyClientError.NotFoundError);
+      }
     });
   });
 });

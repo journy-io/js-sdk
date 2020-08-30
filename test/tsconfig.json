@@ -5,6 +5,8 @@
       "es2019",
       "dom"
     ],
-    "noImplicitAny": false
+    "noImplicitAny": false,
+    "declaration": true,
+    "strict": true
   }
 }

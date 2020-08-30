@@ -7,13 +7,14 @@
     "types": [],
     "outDir": "dist",
     "rootDir": "lib",
-    "declaration": true
+    "declaration": true,
+    "strict": true
   },
   "include": [
-    "lib/**/*.ts"
+    "lib/**/*.ts",
+    "test/**/*.ts"
   ],
   "exclude": [
-    "**/node_modules",
-    "**/test/*"
+    "**/node_modules"
   ]
 }
