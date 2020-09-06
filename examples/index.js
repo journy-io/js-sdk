@@ -1,4 +1,4 @@
-const journy = require("@journy/sdk");
+const journy = require("@journyio/sdk");
 const path = require("path");
 
 require("dotenv").config({ path: path.resolve(__dirname, "./.env") });
@@ -9,11 +9,7 @@ const config = {
 };
 
 async function doExample() {
-  const client = journy.createJournyClient(config);
-  const initialisation = await client.init();
-  if (!initialisation.success) {
-    console.error("Initialisation failed");
-  }
+  const client = journy.createClient(config);
   const trackEventResponse = await client.trackEvent({
     email: "test@journy.io",
     tag: "tag",
