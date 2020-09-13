@@ -122,8 +122,14 @@ describe("Client", () => {
           200,
           rateLimitHeader,
           JSON.stringify({
-            permissions: ["TrackData", "GetTrackingSnippet", "ReadUserProfile"],
-            propertyGroupName: "test",
+            data: {
+              permissions: [
+                "TrackData",
+                "GetTrackingSnippet",
+                "ReadUserProfile",
+              ],
+              propertyGroupName: "test",
+            },
           })
         )
       );
@@ -186,8 +192,6 @@ describe("Client", () => {
         {
           email: "test@journy.io",
           tag: "tag",
-          campaign: "campaign",
-          source: "source",
         }
       );
 
@@ -195,8 +199,6 @@ describe("Client", () => {
       const response = await client.trackEvent({
         email: "test@journy.io",
         tag: "tag",
-        campaign: "campaign",
-        source: "source",
       });
 
       expect(response).toBeDefined();
@@ -212,8 +214,6 @@ describe("Client", () => {
         {
           email: "test@journy.io",
           tag: "tag",
-          campaign: "campaign",
-          source: "source",
           recordedAt: "2019-01-01T00:00:00.000Z",
           properties: {
             hasDogs: "2",
@@ -228,8 +228,6 @@ describe("Client", () => {
       const response = await client.trackEvent({
         email: "test@journy.io",
         tag: "tag",
-        campaign: "campaign",
-        source: "source",
         recordedAt: new Date("2019-01-01T00:00:00.000Z"),
         properties: {
           likesDog: true,
@@ -253,8 +251,6 @@ describe("Client", () => {
         {
           email: "notAnEmail",
           tag: "tag",
-          campaign: "campaign",
-          source: "source",
         }
       );
 
@@ -262,8 +258,6 @@ describe("Client", () => {
       const response1 = await client.trackEvent({
         email: "notAnEmail",
         tag: "tag",
-        campaign: "campaign",
-        source: "source",
       });
 
       expect(eventClient.getLastRequest()).toEqual(expectedRequest);
@@ -351,7 +345,7 @@ describe("Client", () => {
         new HttpResponse(
           200,
           new HttpHeaders({ "X-RateLimit-Remaining": "5000" }),
-          JSON.stringify(profile)
+          JSON.stringify({ data: profile })
         )
       );
       const expectedResponse = new HttpRequest(
@@ -423,8 +417,10 @@ describe("Client", () => {
           200,
           new HttpHeaders({ "X-RateLimit-Remaining": "5000" }),
           JSON.stringify({
-            domain: "journy.io",
-            snippet: "<script>snippet</script>",
+            data: {
+              domain: "journy.io",
+              snippet: "<script>snippet</script>",
+            },
           })
         )
       );

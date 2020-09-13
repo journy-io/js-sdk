@@ -82,8 +82,6 @@ export class Client {
       {
         email: args.email,
         tag: args.tag,
-        campaign: args.campaign,
-        source: args.source,
         recordedAt: args.recordedAt ? args.recordedAt.toISOString() : undefined,
         properties: args.properties
           ? stringifyProperties(args.properties)
@@ -153,7 +151,7 @@ export class Client {
     );
     try {
       const response = await this.httpClient.send(request);
-      const profile: Profile = JSON.parse(response.getBody());
+      const profile: Profile = JSON.parse(response.getBody()).data;
       const remaining = response.getHeaders().byName("X-RateLimit-Remaining");
       return {
         success: true,
@@ -185,7 +183,7 @@ export class Client {
     );
     try {
       const response = await this.httpClient.send(request);
-      const parsed = JSON.parse(response.getBody());
+      const parsed = JSON.parse(response.getBody()).data;
       const remaining = response.getHeaders().byName("X-RateLimit-Remaining");
       const snippet = parsed.snippet;
       return {
@@ -213,7 +211,7 @@ export class Client {
     );
     try {
       const response = await this.httpClient.send(request);
-      const specs: ApiKeySpecs = JSON.parse(response.getBody());
+      const specs: ApiKeySpecs = JSON.parse(response.getBody()).data;
       const remaining = response.getHeaders().byName("X-RateLimit-Remaining");
       return {
         success: true,
@@ -289,8 +287,6 @@ export interface ApiKeySpecs {
 export interface TrackEventArguments {
   email: string;
   tag: string;
-  campaign: string;
-  source: string;
   recordedAt?: Date;
   properties?: Properties;
 }
