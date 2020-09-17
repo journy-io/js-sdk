@@ -136,7 +136,7 @@ export class Client {
       return Client.handleError(error);
     }
   }
-  
+
   /**
    * Get a tracking snippet.
    * @param args The parameters to retrieve the Tracking Snippet.
