@@ -1,17 +1,17 @@
 # journy.io Node.js SDK
 
-This is the Node.js SDK for [journy.io](https://journy.io).
+This is the Node.js SDK for [journy.io](https://journy.io?utm_source=github&utm_content=readme-js-sdk).
 
 ## 💾 Installation
 
 You can use your package manager (`npm` or `yarn`) to install the SDK. Therefore run:
 
 ```bash
-npm install --save @journy-io/sdk
+npm install --save @journyio/sdk
 ```
 or
 ```bash
-yarn add @journy-io/sdk
+yarn add @journyio/sdk
 ```
 
 ## 🔌 Getting started
@@ -21,7 +21,7 @@ yarn add @journy-io/sdk
 To start, first import the client.
 
 ```typescript
-import { Client, createClient } from "@journy-io/sdk";
+import { Client, createClient } from "@journyio/sdk";
 ```
 
 ### Configuration and Client creation
@@ -30,8 +30,8 @@ To create a journy-io Client use the `createJournyClient(config: ClientConfig)`-
 A `ClientConfig`-configuration should be given to the `createJournyClient(config: ClientConfig)`-function.
 
 The `ClientConfig` includes two fields: the `apiKeySecret`-field and the `apiUrl`-field. 
-The `apiKeySecret` should include the API Key secret generated from the [journy.io](https://journy.io) application.
-The `apiUrl` should include the API URL of the [journy.io](https://journy.io) API.  
+The `apiKeySecret` should include the API Key secret generated from the [journy.io](https://journy.io?utm_source=github&utm_content=readme-js-sdk) application.
+The `apiUrl` should include the API URL of the [journy.io](https://journy.io?utm_source=github&utm_content=readme-js-sdk) API.  
 
 ```typescript
 const config = {
@@ -59,7 +59,7 @@ const client: Client = new Client(httpClient, config);
 await client.getApiKeySpecs();
 ```
 
-The response of the method-call includes the *property-group-name* configured in the [journy.io](https://journy.io) application and a list of *permissions* the API Key has.
+The response of the method-call includes the *property-group-name* configured in the [journy.io](https://journy.io?utm_source=github&utm_content=readme-js-sdk) application and a list of *permissions* the API Key has.
 
 
 #### trackEvent
@@ -165,13 +165,13 @@ In case the `success`-field is `false`, the return-type will be `Error` and the 
 
 ## 🔑 Account creation and API Key management
 
-To be able to use the journy.io SDK you should have an API Key. If you don't have one you can create one in the [journy.io](https://journy.io) application. 
-If you don't have an account already, you can create one in [the journy.io application](https://app.journy.io/register). 
+To be able to use the journy.io SDK you should have an API Key. If you don't have one you can create one in the [journy.io](https://journy.io?utm_source=github&utm_content=readme-js-sdk) application. 
+If you don't have an account already, you can create one in [the journy.io application](https://app.journy.io/register?utm_source=github&utm_content=readme-js-sdk). 
 After creating an account - or if you already have an account - you can go to your settings, under the *sources*-tab, to create and edit API Keys. Make sure to give the correct permissions to the API Key and set the correct property-group-name.
 
 ## 📬 API
 
-More documentation and information about the [journy.io](https://journy.io) API can be found in our [API documentation](https://journy-io.readme.io/docs).
+More documentation and information about the [journy.io](https://journy.io?utm_source=github&utm_content=readme-js-sdk) API can be found in our [API documentation](https://journy-io.readme.io/docs).
 
 ## 💯 Tests
 
