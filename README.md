@@ -59,7 +59,7 @@ const client: Client = new Client(httpClient, config);
 await client.getApiKeySpecs();
 ```
 
-The response of the method-call includes the *property-group-name* configured in the [journy.io](https://journy.io) application and a list of *permissions* the API Key has.
+The response of the method-call includes the *property-group-name* configured in the [journy.io](https://journy.io?utm_source=github&utm_content=readme-js-sdk) application and a list of *permissions* the API Key has.
 
 
 #### trackEvent
