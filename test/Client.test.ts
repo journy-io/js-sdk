@@ -1,12 +1,4 @@
-import {
-  ApiKeySpecs,
-  Client,
-  createClient,
-  JourneyClientError,
-  ProfileResponse,
-  Result,
-  TrackingSnippetResponse,
-} from "../lib/Client";
+import { Client, createClient, JourneyClientError } from "../lib/Client";
 import {
   HttpClientMatch,
   HttpClientThatThrows,
@@ -361,89 +353,6 @@ describe("Client", () => {
       if (!response1.success) {
         expect(response1.error).toBeDefined();
         expect(response1.error).toEqual(JourneyClientError.BadArgumentsError);
-      }
-    });
-  });
-  describe("getProfile", () => {
-    it("correctly returns a profile", async () => {
-      const profile = {
-        id: "1",
-        engagementScore: 0,
-        emailAddress: "test@journy.io",
-        devices: [],
-        touchpoints: [],
-      };
-      const profileClient = new HttpClientMatch(
-        new HttpResponse(
-          200,
-          new HttpHeaders({ "X-RateLimit-Remaining": "5000" }),
-          JSON.stringify({
-            data: profile,
-            meta: {
-              requestId: "requestId",
-            },
-          })
-        )
-      );
-      const expectedResponse = new HttpRequest(
-        new URL(
-          "https://api.test.com/journeys/profiles?email=test%40journy.io"
-        ),
-        "GET",
-        keySecretHeader
-      );
-
-      const client = new Client(profileClient, clientConfig);
-      const response = await client.getProfile({ email: "test@journy.io" });
-
-      expect(profileClient.getLastRequest()).toEqual(expectedResponse);
-      expect(response).toBeDefined();
-      expect(response.success).toBeTruthy();
-      expect(response.callsRemaining).toEqual(5000);
-      if (response.success) {
-        expect(response.data).toBeDefined();
-        expect(response.data.email).toEqual("test@journy.io");
-        expect(response.data.profile).toEqual(profile);
-      }
-    });
-    it("correctly fails with incorrect arguments", async () => {
-      const profileClient = new HttpClientMatch(badRequestResponse);
-      const expectedRequest = new HttpRequest(
-        new URL("https://api.test.com/journeys/profiles?email="),
-        "GET",
-        keySecretHeader
-      );
-
-      const client = new Client(profileClient, clientConfig);
-      const response = await client.getProfile({ email: "" });
-
-      expect(profileClient.getLastRequest()).toEqual(expectedRequest);
-      expect(response).toBeDefined();
-      expect(response.success).toBeFalsy();
-      expect(response.callsRemaining).toEqual(5000);
-      if (!response.success) {
-        expect(response.error).toEqual(JourneyClientError.BadArgumentsError);
-      }
-    });
-    it("correctly fails when not authorized", async () => {
-      const profileClient = new HttpClientMatch(notAuthorizedResponse);
-      const expectedRequest = new HttpRequest(
-        new URL(
-          "https://api.test.com/journeys/profiles?email=test%40journy.io"
-        ),
-        "GET",
-        keySecretHeader
-      );
-
-      const client = new Client(profileClient, clientConfig);
-      const response = await client.getProfile({ email: "test@journy.io" });
-
-      expect(profileClient.getLastRequest()).toEqual(expectedRequest);
-      expect(response).toBeDefined();
-      expect(response.success).toBeFalsy();
-      expect(response.callsRemaining).toEqual(5000);
-      if (!response.success) {
-        expect(response.error).toEqual(JourneyClientError.UnauthorizedError);
       }
     });
   });
