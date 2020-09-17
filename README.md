@@ -7,11 +7,11 @@ This is the Node.js SDK for [journy.io](https://journy.io?utm_source=github&utm_
 You can use your package manager (`npm` or `yarn`) to install the SDK. Therefore run:
 
 ```bash
-npm install --save @journy-io/sdk
+npm install --save @journyio/sdk
 ```
 or
 ```bash
-yarn add @journy-io/sdk
+yarn add @journyio/sdk
 ```
 
 ## 🔌 Getting started
@@ -21,7 +21,7 @@ yarn add @journy-io/sdk
 To start, first import the client.
 
 ```typescript
-import { Client, createClient } from "@journy-io/sdk";
+import { Client, createClient } from "@journyio/sdk";
 ```
 
 ### Configuration and Client creation
