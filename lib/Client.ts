@@ -5,7 +5,6 @@ import {
   HttpRequestError,
 } from "./HttpClient";
 import { Config } from "./Config";
-import { Profile } from "./models/Profile";
 
 export interface ClientConfig {
   apiKeySecret: string;
@@ -137,38 +136,6 @@ export class Client {
   }
 
   /**
-   * Get the profile of a user.
-   * @param args The parameters to retrieve the profile.
-   * @returns A response with the profile, or an error stating something
-   * failed (not found, not authorized...).
-   */
-  async getProfile(
-    args: GetProfileArguments
-  ): Promise<Result<ProfileResponse>> {
-    const { email } = args;
-    const request = new HttpRequest(
-      this.createURL(`/journeys/profiles?email=${encodeURIComponent(email)}`),
-      "GET",
-      new HttpHeaders({ "x-api-key": this.clientConfig.apiKeySecret })
-    );
-    try {
-      const response = await this.httpClient.send(request);
-      const profile: Profile = JSON.parse(response.getBody());
-      const remaining = response.getHeaders().byName("X-RateLimit-Remaining");
-      return {
-        success: true,
-        callsRemaining: remaining ? parseInt(remaining) : undefined,
-        data: {
-          email: email,
-          profile: profile,
-        },
-      };
-    } catch (error) {
-      return Client.handleError(error);
-    }
-  }
-
-  /**
    * Get a tracking snippet.
    * @param args The parameters to retrieve the Tracking Snippet.
    * @returns A response with the snippet, or an error stating something
@@ -256,7 +223,7 @@ export type Properties = { [key: string]: string | number | boolean | Date };
 
 function stringifyProperties(properties: Properties) {
   const newProperties: Properties = {};
-  for (let key of Object.keys(properties)) {
+  for (const key of Object.keys(properties)) {
     const value = properties[key];
     if (value instanceof Date) {
       newProperties[key] = value.toISOString();
@@ -298,15 +265,6 @@ export interface TrackEventArguments {
 export interface TrackPropertiesArguments {
   email: string;
   properties: Properties;
-}
-
-export interface GetProfileArguments {
-  email: string;
-}
-
-export interface ProfileResponse {
-  email: string;
-  profile: Profile;
 }
 
 export interface GetTrackingSnippetArguments {
