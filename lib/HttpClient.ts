@@ -75,6 +75,7 @@ export class HttpRequestError extends Error {
   constructor(
     message: string,
     private readonly statusCode: number,
+    private readonly apiRequestId: string,
     private readonly headers: HttpHeaders = new HttpHeaders()
   ) {
     super(message);
@@ -87,6 +88,10 @@ export class HttpRequestError extends Error {
 
   getHeaders(): HttpHeaders {
     return this.headers;
+  }
+
+  getApiRequestId(): string {
+    return this.apiRequestId;
   }
 }
 
@@ -118,6 +123,7 @@ export class HttpClientAxios implements HttpClient {
             error.response.data
           )}`,
           error.response.status,
+          error.response.meta.requestId,
           new HttpHeaders(error.response.headers)
         );
       }
@@ -184,6 +190,7 @@ export class HttpClientMatch implements HttpClient {
       throw new HttpRequestError(
         `errorMessage`,
         this.response.getStatusCode(),
+        JSON.parse(this.response.getBody()).meta.requestId,
         this.response.getHeaders()
       );
     }

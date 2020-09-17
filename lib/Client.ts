@@ -46,12 +46,14 @@ export class Client {
       const remaining = error.getHeaders().byName("X-RateLimit-Remaining");
       return {
         success: false,
+        requestId: error.getApiRequestId(),
         callsRemaining: remaining ? parseInt(remaining) : undefined,
         error: statusCodeToError(error.getStatusCode()),
       };
     }
     return {
       success: false,
+      requestId: undefined,
       error: JourneyClientError.UnknownError,
       callsRemaining: undefined,
     };
@@ -93,6 +95,7 @@ export class Client {
       const remaining = response.getHeaders().byName("X-RateLimit-Remaining");
       return {
         success: true,
+        requestId: JSON.parse(response.getBody()).meta.requestId,
         callsRemaining: remaining ? parseInt(remaining) : undefined,
         data: undefined,
       };
@@ -126,6 +129,7 @@ export class Client {
       const remaining = response.getHeaders().byName("X-RateLimit-Remaining");
       return {
         success: true,
+        requestId: JSON.parse(response.getBody()).meta.requestId,
         callsRemaining: remaining ? parseInt(remaining) : undefined,
         data: undefined,
       };
@@ -155,6 +159,7 @@ export class Client {
       const remaining = response.getHeaders().byName("X-RateLimit-Remaining");
       return {
         success: true,
+        requestId: JSON.parse(response.getBody()).meta.requestId,
         callsRemaining: remaining ? parseInt(remaining) : undefined,
         data: {
           email: email,
@@ -188,6 +193,7 @@ export class Client {
       const snippet = parsed.snippet;
       return {
         success: true,
+        requestId: JSON.parse(response.getBody()).meta.requestId,
         callsRemaining: remaining ? parseInt(remaining) : undefined,
         data: {
           domain: domain,
@@ -215,6 +221,7 @@ export class Client {
       const remaining = response.getHeaders().byName("X-RateLimit-Remaining");
       return {
         success: true,
+        requestId: JSON.parse(response.getBody()).meta.requestId,
         callsRemaining: remaining ? parseInt(remaining) : undefined,
         data: specs,
       };
@@ -269,12 +276,14 @@ export type Result<T> = Success<T> | Error;
 
 export interface Success<T> {
   success: true;
+  requestId: string;
   callsRemaining: number | undefined;
   data: T;
 }
 
 export interface Error {
   success: false;
+  requestId: string | undefined;
   callsRemaining: number | undefined;
   error: JourneyClientError;
 }

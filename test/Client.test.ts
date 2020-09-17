@@ -51,13 +51,42 @@ describe("Client", () => {
   const tooManyRateLimitHeader = new HttpHeaders({
     "X-RateLimit-Remaining": "0",
   });
-  const tooManyRequestsResponse = new HttpResponse(429, tooManyRateLimitHeader);
-  const unknownErrorResponse = new HttpResponse(444, rateLimitHeader);
-  const serverErrorResponse = new HttpResponse(500, rateLimitHeader);
-  const notFoundResponse = new HttpResponse(404, rateLimitHeader);
-  const notAuthorizedResponse = new HttpResponse(401, rateLimitHeader);
-  const badRequestResponse = new HttpResponse(400, rateLimitHeader);
-  const createdResponse = new HttpResponse(201, rateLimitHeader);
+  const defaultResponse = JSON.stringify({ meta: { requestId: "requestId" } });
+  const tooManyRequestsResponse = new HttpResponse(
+    429,
+    tooManyRateLimitHeader,
+    defaultResponse
+  );
+  const unknownErrorResponse = new HttpResponse(
+    444,
+    rateLimitHeader,
+    defaultResponse
+  );
+  const serverErrorResponse = new HttpResponse(
+    500,
+    rateLimitHeader,
+    defaultResponse
+  );
+  const notFoundResponse = new HttpResponse(
+    404,
+    rateLimitHeader,
+    defaultResponse
+  );
+  const notAuthorizedResponse = new HttpResponse(
+    401,
+    rateLimitHeader,
+    defaultResponse
+  );
+  const badRequestResponse = new HttpResponse(
+    400,
+    rateLimitHeader,
+    defaultResponse
+  );
+  const createdResponse = new HttpResponse(
+    201,
+    rateLimitHeader,
+    defaultResponse
+  );
   describe("getApiKeySpecs", () => {
     it("correctly errors when too many requests were made", async () => {
       const validateClient = new HttpClientMatch(tooManyRequestsResponse);
@@ -129,6 +158,9 @@ describe("Client", () => {
                 "ReadUserProfile",
               ],
               propertyGroupName: "test",
+            },
+            meta: {
+              requestId: "requestId",
             },
           })
         )
@@ -345,7 +377,12 @@ describe("Client", () => {
         new HttpResponse(
           200,
           new HttpHeaders({ "X-RateLimit-Remaining": "5000" }),
-          JSON.stringify({ data: profile })
+          JSON.stringify({
+            data: profile,
+            meta: {
+              requestId: "requestId",
+            },
+          })
         )
       );
       const expectedResponse = new HttpRequest(
@@ -420,6 +457,9 @@ describe("Client", () => {
             data: {
               domain: "journy.io",
               snippet: "<script>snippet</script>",
+            },
+            meta: {
+              requestId: "requestId",
             },
           })
         )
