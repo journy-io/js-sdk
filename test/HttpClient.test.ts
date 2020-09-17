@@ -58,10 +58,15 @@ describe("HttpResponse", () => {
 
 describe("HttpRequestError", () => {
   it("works", () => {
-    const error = new HttpRequestError("You are not authorized", 401);
+    const error = new HttpRequestError(
+      "You are not authorized",
+      401,
+      "requestId"
+    );
     expect(error.message).toEqual("You are not authorized");
     expect(error.getStatusCode()).toEqual(401);
     expect(error.getHeaders().toObject()).toEqual({});
+    expect(error.getApiRequestId()).toEqual("requestId");
   });
 });
 

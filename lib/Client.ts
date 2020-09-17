@@ -45,12 +45,14 @@ export class Client {
       const remaining = error.getHeaders().byName("X-RateLimit-Remaining");
       return {
         success: false,
+        requestId: error.getApiRequestId(),
         callsRemaining: remaining ? parseInt(remaining) : undefined,
         error: statusCodeToError(error.getStatusCode()),
       };
     }
     return {
       success: false,
+      requestId: undefined,
       error: JourneyClientError.UnknownError,
       callsRemaining: undefined,
     };
@@ -81,8 +83,6 @@ export class Client {
       {
         email: args.email,
         tag: args.tag,
-        campaign: args.campaign,
-        source: args.source,
         recordedAt: args.recordedAt ? args.recordedAt.toISOString() : undefined,
         properties: args.properties
           ? stringifyProperties(args.properties)
@@ -94,6 +94,7 @@ export class Client {
       const remaining = response.getHeaders().byName("X-RateLimit-Remaining");
       return {
         success: true,
+        requestId: JSON.parse(response.getBody()).meta.requestId,
         callsRemaining: remaining ? parseInt(remaining) : undefined,
         data: undefined,
       };
@@ -127,6 +128,7 @@ export class Client {
       const remaining = response.getHeaders().byName("X-RateLimit-Remaining");
       return {
         success: true,
+        requestId: JSON.parse(response.getBody()).meta.requestId,
         callsRemaining: remaining ? parseInt(remaining) : undefined,
         data: undefined,
       };
@@ -152,11 +154,12 @@ export class Client {
     );
     try {
       const response = await this.httpClient.send(request);
-      const parsed = JSON.parse(response.getBody());
+      const parsed = JSON.parse(response.getBody()).data;
       const remaining = response.getHeaders().byName("X-RateLimit-Remaining");
       const snippet = parsed.snippet;
       return {
         success: true,
+        requestId: JSON.parse(response.getBody()).meta.requestId,
         callsRemaining: remaining ? parseInt(remaining) : undefined,
         data: {
           domain: domain,
@@ -180,10 +183,11 @@ export class Client {
     );
     try {
       const response = await this.httpClient.send(request);
-      const specs: ApiKeySpecs = JSON.parse(response.getBody());
+      const specs: ApiKeySpecs = JSON.parse(response.getBody()).data;
       const remaining = response.getHeaders().byName("X-RateLimit-Remaining");
       return {
         success: true,
+        requestId: JSON.parse(response.getBody()).meta.requestId,
         callsRemaining: remaining ? parseInt(remaining) : undefined,
         data: specs,
       };
@@ -238,12 +242,14 @@ export type Result<T> = Success<T> | Error;
 
 export interface Success<T> {
   success: true;
+  requestId: string;
   callsRemaining: number | undefined;
   data: T;
 }
 
 export interface Error {
   success: false;
+  requestId: string | undefined;
   callsRemaining: number | undefined;
   error: JourneyClientError;
 }
@@ -256,8 +262,6 @@ export interface ApiKeySpecs {
 export interface TrackEventArguments {
   email: string;
   tag: string;
-  campaign: string;
-  source: string;
   recordedAt?: Date;
   properties?: Properties;
 }

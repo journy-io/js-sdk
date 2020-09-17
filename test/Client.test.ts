@@ -43,13 +43,42 @@ describe("Client", () => {
   const tooManyRateLimitHeader = new HttpHeaders({
     "X-RateLimit-Remaining": "0",
   });
-  const tooManyRequestsResponse = new HttpResponse(429, tooManyRateLimitHeader);
-  const unknownErrorResponse = new HttpResponse(444, rateLimitHeader);
-  const serverErrorResponse = new HttpResponse(500, rateLimitHeader);
-  const notFoundResponse = new HttpResponse(404, rateLimitHeader);
-  const notAuthorizedResponse = new HttpResponse(401, rateLimitHeader);
-  const badRequestResponse = new HttpResponse(400, rateLimitHeader);
-  const createdResponse = new HttpResponse(201, rateLimitHeader);
+  const defaultResponse = JSON.stringify({ meta: { requestId: "requestId" } });
+  const tooManyRequestsResponse = new HttpResponse(
+    429,
+    tooManyRateLimitHeader,
+    defaultResponse
+  );
+  const unknownErrorResponse = new HttpResponse(
+    444,
+    rateLimitHeader,
+    defaultResponse
+  );
+  const serverErrorResponse = new HttpResponse(
+    500,
+    rateLimitHeader,
+    defaultResponse
+  );
+  const notFoundResponse = new HttpResponse(
+    404,
+    rateLimitHeader,
+    defaultResponse
+  );
+  const notAuthorizedResponse = new HttpResponse(
+    401,
+    rateLimitHeader,
+    defaultResponse
+  );
+  const badRequestResponse = new HttpResponse(
+    400,
+    rateLimitHeader,
+    defaultResponse
+  );
+  const createdResponse = new HttpResponse(
+    201,
+    rateLimitHeader,
+    defaultResponse
+  );
   describe("getApiKeySpecs", () => {
     it("correctly errors when too many requests were made", async () => {
       const validateClient = new HttpClientMatch(tooManyRequestsResponse);
@@ -114,8 +143,17 @@ describe("Client", () => {
           200,
           rateLimitHeader,
           JSON.stringify({
-            permissions: ["TrackData", "GetTrackingSnippet", "ReadUserProfile"],
-            propertyGroupName: "test",
+            data: {
+              permissions: [
+                "TrackData",
+                "GetTrackingSnippet",
+                "ReadUserProfile",
+              ],
+              propertyGroupName: "test",
+            },
+            meta: {
+              requestId: "requestId",
+            },
           })
         )
       );
@@ -178,8 +216,6 @@ describe("Client", () => {
         {
           email: "test@journy.io",
           tag: "tag",
-          campaign: "campaign",
-          source: "source",
         }
       );
 
@@ -187,8 +223,6 @@ describe("Client", () => {
       const response = await client.trackEvent({
         email: "test@journy.io",
         tag: "tag",
-        campaign: "campaign",
-        source: "source",
       });
 
       expect(response).toBeDefined();
@@ -204,8 +238,6 @@ describe("Client", () => {
         {
           email: "test@journy.io",
           tag: "tag",
-          campaign: "campaign",
-          source: "source",
           recordedAt: "2019-01-01T00:00:00.000Z",
           properties: {
             hasDogs: "2",
@@ -220,8 +252,6 @@ describe("Client", () => {
       const response = await client.trackEvent({
         email: "test@journy.io",
         tag: "tag",
-        campaign: "campaign",
-        source: "source",
         recordedAt: new Date("2019-01-01T00:00:00.000Z"),
         properties: {
           likesDog: true,
@@ -245,8 +275,6 @@ describe("Client", () => {
         {
           email: "notAnEmail",
           tag: "tag",
-          campaign: "campaign",
-          source: "source",
         }
       );
 
@@ -254,8 +282,6 @@ describe("Client", () => {
       const response1 = await client.trackEvent({
         email: "notAnEmail",
         tag: "tag",
-        campaign: "campaign",
-        source: "source",
       });
 
       expect(eventClient.getLastRequest()).toEqual(expectedRequest);
@@ -337,8 +363,13 @@ describe("Client", () => {
           200,
           new HttpHeaders({ "X-RateLimit-Remaining": "5000" }),
           JSON.stringify({
-            domain: "journy.io",
-            snippet: "<script>snippet</script>",
+            data: {
+              domain: "journy.io",
+              snippet: "<script>snippet</script>",
+            },
+            meta: {
+              requestId: "requestId",
+            },
           })
         )
       );
