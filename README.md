@@ -100,24 +100,6 @@ interface args {
 }
 ```
 
-#### getProfile
-
-```typescript
-await client.getProfile(args);
-```
-
-This method can be used to retrieve a profile of a user.
-
-The `getProfile`-arguments interface is:
-
-```typescript
-interface args {
-  email: string;
-}
-```
-
-The response of the method-call will include (if existing) the profile of the user.
-
 #### getTrackingSnippet
 
 ```typescript
