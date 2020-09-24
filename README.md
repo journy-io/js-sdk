@@ -76,8 +76,6 @@ The `trackEvent`-arguments interface is:
 interface args {
     email: string;
     tag: string;
-    campaign: string;
-    source: string;
     recordedAt?: DateTime;
     journeyProperties?: Properties;
 }
@@ -96,7 +94,7 @@ The `trackProperties`-arguments interface is:
 ```typescript
 interface args {
   email: string;
-  journeyProperties: Properties;
+  properties: Properties;
 }
 ```
 
