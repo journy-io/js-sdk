@@ -122,7 +122,7 @@ if (!result.success) {
 }
 ```
 
-The request ID can be useful to when viewing logs in [journy.io](https://app.journy.io?utm_source=github&utm_content=readme-js-sdk).
+The request ID can be useful when viewing API logs in [journy.io](https://app.journy.io?utm_source=github&utm_content=readme-js-sdk).
 
 ## 📬 API
 
