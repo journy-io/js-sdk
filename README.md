@@ -30,7 +30,7 @@ To be able to use the journy.io SDK you need to generate an API key. If you don'
 
 If you don't have an account yet, you can create one in [journy.io](https://app.journy.io/register?utm_source=github&utm_content=readme-js-sdk) or [request a demo first](https://www.journy.io/book-demo?utm_source=github&utm_content=readme-js-sdk).
 
-You can go to your settings, under the *sources*-tab, to create and edit API keys. Make sure to give the correct permissions to the API Key and set the correct property group name.
+Go to your settings, under the *sources*-tab, to create and edit API keys. Make sure to give the correct permissions to the API Key and set the correct property group name.
 
 ```ts
 const client: Client = createClient({
