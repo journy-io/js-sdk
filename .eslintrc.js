@@ -9,7 +9,6 @@ module.exports = {
     "plugin:import/errors",
     "plugin:import/warnings",
     "plugin:import/typescript",
-    "plugin:jsx-a11y/recommended",
     "plugin:prettier/recommended",
     "plugin:security/recommended",
   ],
@@ -32,7 +31,6 @@ module.exports = {
       { "ts-expect-error": "allow-with-description" },
     ],
     "import/no-unused-modules": ["warn", { unusedExports: true }],
-    "jsx-a11y/no-onchange": "off",
     "security/detect-object-injection": "off",
   },
 };
