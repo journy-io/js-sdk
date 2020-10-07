@@ -33,7 +33,9 @@
     "collectCoverage": true,
     "testEnvironment": "node"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@journyio/http": "^1.0.4"
+  },
   "peerDependencies": {
     "axios": "^0.20.0"
   },
