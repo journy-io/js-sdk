@@ -80,6 +80,8 @@ await client.trackEvent({
 
 #### Set, update or delete properties for a user
 
+_Note: when sending an empty value (`""`) as value for a property, the property will be deleted._
+
 ```ts
 await client.trackProperties({
   email: "name@domain.tld",
@@ -126,7 +128,7 @@ The request ID can be useful when viewing API logs in [journy.io](https://app.jo
 
 ## 📬 API
 
-More documentation and information about the [journy.io](https://journy.io?utm_source=github&utm_content=readme-js-sdk) API can be found in our [API documentation](https://journy-io.readme.io/docs).
+More documentation and information about the [journy.io](https://journy.io?utm_source=github&utm_content=readme-js-sdk) API can be found in our [API documentation](https://journy-io.readme.io/reference).
 
 ## 💯 Tests
 
