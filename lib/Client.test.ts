@@ -1,38 +1,46 @@
-import { Client, createClient, JourneyClientError } from "../lib/Client";
+import { Client, createClient, APIError, Config } from "./Client";
 import {
   HttpClientMatch,
   HttpClientThatThrows,
   HttpHeaders,
   HttpRequest,
   HttpResponse,
-} from "../lib/HttpClient";
+} from "./HttpClient";
 
-describe("createJournyClient", () => {
-  it("fails when the config is invalid", () => {
-    expect(() => createClient({ apiKeySecret: "", apiUrl: "" })).toThrow(Error);
-    expect(() =>
-      createClient({ apiKeySecret: "non-empty-key", apiUrl: "" })
-    ).toThrow(Error);
-    expect(() =>
-      createClient({ apiKeySecret: "", apiUrl: "non-empty-url" })
-    ).toThrow(Error);
+describe("createClient", () => {
+  it("fails when the config is invalid", async () => {
+    expect(() => {
+      createClient({ apiKey: "" });
+    }).toThrowError("The API key cannot be empty.");
+
+    expect(() => {
+      createClient({ apiKey: "api-key", apiUrl: "invalid-url" });
+    }).toThrowError("The API url is not a valid URL: invalid-url");
   });
-  it("creates a journy client", () => {
+
+  it("creates a client with API url", () => {
     const client = createClient({
-      apiKeySecret: "key-secret",
+      apiKey: "key-secret",
       apiUrl: "https://api.test.com",
+    });
+    expect(client).toBeDefined();
+  });
+
+  it("creates a client", () => {
+    const client = createClient({
+      apiKey: "key-secret",
     });
     expect(client).toBeDefined();
   });
 });
 
 describe("Client", () => {
-  const clientConfig = {
-    apiKeySecret: "key-secret",
+  const clientConfig: Config = {
+    apiKey: "key-secret",
     apiUrl: "https://api.test.com",
   };
-  const nonExistingClientConfig = {
-    apiKeySecret: "non-existing-key-secret",
+  const nonExistingClientConfig: Config = {
+    apiKey: "non-existing-key-secret",
     apiUrl: "https://api.test.com",
   };
   const keySecretHeader = new HttpHeaders({ "x-api-key": "key-secret" });
@@ -64,11 +72,6 @@ describe("Client", () => {
     rateLimitHeader,
     defaultResponse
   );
-  const notAuthorizedResponse = new HttpResponse(
-    401,
-    rateLimitHeader,
-    defaultResponse
-  );
   const badRequestResponse = new HttpResponse(
     400,
     rateLimitHeader,
@@ -79,6 +82,7 @@ describe("Client", () => {
     rateLimitHeader,
     defaultResponse
   );
+
   describe("getApiKeySpecs", () => {
     it("correctly errors when too many requests were made", async () => {
       const validateClient = new HttpClientMatch(tooManyRequestsResponse);
@@ -89,16 +93,17 @@ describe("Client", () => {
       );
 
       const client = new Client(validateClient, clientConfig);
-      const response = await client.getApiKeySpecs();
+      const response = await client.getApiKeyDetails();
 
       expect(validateClient.getLastRequest()).toEqual(expectedRequest);
       expect(response).toBeDefined();
       expect(response.success).toBeFalsy();
       expect(response.callsRemaining).toEqual(0);
       if (!response.success) {
-        expect(response.error).toEqual(JourneyClientError.TooManyRequests);
+        expect(response.error).toEqual(APIError.TooManyRequests);
       }
     });
+
     it("correctly perseveres an unknown error", async () => {
       const validateClient = new HttpClientMatch(unknownErrorResponse);
       const expectedRequest = new HttpRequest(
@@ -108,16 +113,17 @@ describe("Client", () => {
       );
 
       const client = new Client(validateClient, clientConfig);
-      const response = await client.getApiKeySpecs();
+      const response = await client.getApiKeyDetails();
 
       expect(validateClient.getLastRequest()).toEqual(expectedRequest);
       expect(response).toBeDefined();
       expect(response.success).toBeFalsy();
       expect(response.callsRemaining).toEqual(5000);
       if (!response.success) {
-        expect(response.error).toEqual(JourneyClientError.UnknownError);
+        expect(response.error).toEqual(APIError.UnknownError);
       }
     });
+
     it("correctly perseveres a server error", async () => {
       const validateClient = new HttpClientMatch(serverErrorResponse);
       const expectedRequest = new HttpRequest(
@@ -127,16 +133,17 @@ describe("Client", () => {
       );
 
       const client = new Client(validateClient, clientConfig);
-      const response = await client.getApiKeySpecs();
+      const response = await client.getApiKeyDetails();
 
       expect(validateClient.getLastRequest()).toEqual(expectedRequest);
       expect(response).toBeDefined();
       expect(response.success).toBeFalsy();
       expect(response.callsRemaining).toEqual(5000);
       if (!response.success) {
-        expect(response.error).toEqual(JourneyClientError.ServerError);
+        expect(response.error).toEqual(APIError.ServerError);
       }
     });
+
     it("should correctly get api key specs", async () => {
       const validateClient1 = new HttpClientMatch(
         new HttpResponse(
@@ -174,7 +181,7 @@ describe("Client", () => {
       const client2 = new Client(validateClient2, nonExistingClientConfig);
       const client3 = new Client(new HttpClientThatThrows(), clientConfig);
 
-      const response = await client.getApiKeySpecs();
+      const response = await client.getApiKeyDetails();
       expect(validateClient1.getLastRequest()).toEqual(expectedRequest1);
       expect(response).toBeDefined();
       expect(response.success).toBeTruthy();
@@ -188,24 +195,25 @@ describe("Client", () => {
         expect(response.data.propertyGroupName).toEqual("test");
       }
 
-      const response2 = await client2.getApiKeySpecs();
+      const response2 = await client2.getApiKeyDetails();
       expect(validateClient2.getLastRequest()).toEqual(expectedRequest2);
       expect(response2).toBeDefined();
       expect(response2.success).toBeFalsy();
       expect(response2.callsRemaining).toEqual(5000);
       if (response2.success === false) {
-        expect(response2.error).toEqual(JourneyClientError.NotFoundError);
+        expect(response2.error).toEqual(APIError.NotFoundError);
       }
 
-      const response3 = await client3.getApiKeySpecs();
+      const response3 = await client3.getApiKeyDetails();
       expect(response3).toBeDefined();
       expect(response3.success).toBeFalsy();
       if (!response3.success) {
-        expect(response3.error).toEqual(JourneyClientError.UnknownError);
+        expect(response3.error).toEqual(APIError.UnknownError);
       }
       expect(response3.callsRemaining).toBeUndefined();
     });
   });
+
   describe("trackEvent", () => {
     it("correctly tracks an event", async () => {
       const eventClient = new HttpClientMatch(createdResponse);
@@ -266,6 +274,7 @@ describe("Client", () => {
       expect(response.success).toBeTruthy();
       expect(response.callsRemaining).toEqual(5000);
     });
+
     it("correctly states when the input is invalid", async () => {
       const eventClient = new HttpClientMatch(badRequestResponse);
       const expectedRequest = new HttpRequest(
@@ -290,10 +299,11 @@ describe("Client", () => {
       expect(response1.callsRemaining).toEqual(5000);
       if (!response1.success) {
         expect(response1.error).toBeDefined();
-        expect(response1.error).toEqual(JourneyClientError.BadArgumentsError);
+        expect(response1.error).toEqual(APIError.BadArgumentsError);
       }
     });
   });
+
   describe("trackProperties", () => {
     it("correctly tracks properties", async () => {
       const propertiesClient = new HttpClientMatch(createdResponse);
@@ -328,6 +338,7 @@ describe("Client", () => {
       expect(response.success).toBeTruthy();
       expect(response.callsRemaining).toEqual(5000);
     });
+
     it("correctly shows when the input parameters are invalid", async () => {
       const propertiesClient = new HttpClientMatch(badRequestResponse);
       const expectedRequest = new HttpRequest(
@@ -352,10 +363,11 @@ describe("Client", () => {
       expect(response1.callsRemaining).toEqual(5000);
       if (!response1.success) {
         expect(response1.error).toBeDefined();
-        expect(response1.error).toEqual(JourneyClientError.BadArgumentsError);
+        expect(response1.error).toEqual(APIError.BadArgumentsError);
       }
     });
   });
+
   describe("getTrackingSnippet", () => {
     it("correctly returns an existing snippet", async () => {
       const trackingsnippetClient = new HttpClientMatch(
@@ -410,7 +422,7 @@ describe("Client", () => {
       expect(response.success).toBeFalsy();
       expect(response.callsRemaining).toEqual(5000);
       if (!response.success) {
-        expect(response.error).toEqual(JourneyClientError.NotFoundError);
+        expect(response.error).toEqual(APIError.NotFoundError);
       }
     });
   });

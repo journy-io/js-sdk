@@ -12,7 +12,14 @@ jobs:
           node-version: "12.x"
           registry-url: "https://registry.npmjs.org"
           scope: "@journyio"
-      - run: yarn
-      - run: yarn publish --access public
+      - run: npm install
+      - run: npm run lint
+      - run: npm run test
+      - name: Get the version
+        id: get_version
+        run: echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/}
+      - run: npm version --tag ${{ steps.get_version.VERSION }}
+      - run: npm run build
+      - run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -1,20 +1,13 @@
 {
   "compilerOptions": {
+    "target": "ES2019",
+    "lib": ["ES2019", "DOM"],
     "module": "commonjs",
-    "lib": ["es2019", "dom"],
-    "target": "es5",
-    "noImplicitAny": true,
-    "types": [],
-    "outDir": "dist",
-    "rootDir": "lib",
+    "moduleResolution": "node",
+    "outDir": "./dist",
     "declaration": true,
     "strict": true
   },
-  "include": [
-    "lib/**/*.ts"
-  ],
-  "exclude": [
-    "test/**/*.ts",
-    "**/node_modules"
-  ]
+  "include": ["lib"],
+  "exclude": ["**/*.test.ts"]
 }

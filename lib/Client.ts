@@ -1,48 +1,57 @@
 import {
   HttpClient,
+  HttpClientAxios,
   HttpHeaders,
   HttpRequest,
   HttpRequestError,
 } from "./HttpClient";
-import { Config } from "./Config";
+import axios from "axios";
 
-export interface ClientConfig {
-  apiKeySecret: string;
-  apiUrl: string;
+export interface Config {
+  apiKey: string;
+  apiUrl?: string;
 }
 
-const isBrowser =
-  typeof window !== "undefined" && typeof window.document !== "undefined";
+export function createClient(config: Config): Client {
+  const instance = axios.create();
+  delete instance.defaults.headers.common;
+  const httpClient = new HttpClientAxios(instance, 5000);
 
-/**
- * Creates a Client.
- * @param clientConfig The configuration for the Client.
- */
-export function createClient(clientConfig: ClientConfig): Client {
-  const config = new Config();
-  return new Client(config.getHttpClient(), clientConfig);
+  return new Client(httpClient, config);
 }
 
 export class Client {
   constructor(
     private readonly httpClient: HttpClient,
-    private readonly clientConfig: ClientConfig
+    private readonly config: Config
   ) {
-    if (isBrowser) {
+    this.assertNotRunningInBrowser();
+    this.assertConfigIsValid(config);
+  }
+
+  // noinspection JSMethodCanBeStatic
+  private assertNotRunningInBrowser() {
+    if (
+      typeof window !== "undefined" &&
+      typeof window.document !== "undefined"
+    ) {
       throw new Error(
-        `You can't use our client in the browser, because you may leak your API Key secret.`
+        "Sorry, you can't use our SDK in the browser because this will leak your API key."
       );
     }
-    Client.validateClientConfig(clientConfig);
   }
 
   private createURL(path: string) {
-    return new URL(this.clientConfig.apiUrl + path);
+    const url = this.config.apiUrl || "https://api.journy.io";
+
+    return new URL(url + path);
   }
 
-  private static handleError(error: Error): Error {
+  // noinspection JSMethodCanBeStatic
+  private handleError(error: Error): Error {
     if (error instanceof HttpRequestError) {
       const remaining = error.getHeaders().byName("X-RateLimit-Remaining");
+
       return {
         success: false,
         requestId: error.getApiRequestId(),
@@ -50,99 +59,110 @@ export class Client {
         error: statusCodeToError(error.getStatusCode()),
       };
     }
+
     return {
       success: false,
       requestId: undefined,
-      error: JourneyClientError.UnknownError,
+      error: APIError.UnknownError,
       callsRemaining: undefined,
     };
   }
 
-  private static validateClientConfig(clientConfig: ClientConfig) {
-    if (!clientConfig.apiUrl || !clientConfig.apiUrl.trim().length) {
-      throw new Error(`The API URL can not be empty.`);
-    } else if (
-      !clientConfig.apiKeySecret ||
-      !clientConfig.apiKeySecret.trim().length
-    ) {
-      throw new Error(`The API Key secret can not be empty.`);
+  // noinspection JSMethodCanBeStatic
+  private assertConfigIsValid(clientConfig: Config) {
+    if (clientConfig.apiUrl) {
+      try {
+        new URL(clientConfig.apiUrl);
+      } catch (error) {
+        throw new Error(
+          `The API url is not a valid URL: ${clientConfig.apiUrl}`
+        );
+      }
+    }
+
+    if (!clientConfig.apiKey || !clientConfig.apiKey.trim().length) {
+      throw new Error("The API key cannot be empty.");
     }
   }
 
-  /**
-   * Track a user event.
-   * @param args The input to track the event
-   * @returns A response stating the event was tracked correctly,
-   * or an error stating the tracking failed (bad parameters, not authorized...).
-   */
+  private getHeaders() {
+    return new HttpHeaders({ "x-api-key": this.config.apiKey });
+  }
+
+  // noinspection JSMethodCanBeStatic
+  private stringifyProperties(properties: Properties) {
+    const newProperties: Properties = {};
+    for (const key of Object.keys(properties)) {
+      const value = properties[key];
+      if (value instanceof Date) {
+        newProperties[key] = value.toISOString();
+      } else {
+        newProperties[key] = value.toString();
+      }
+    }
+    return newProperties;
+  }
+
   async trackEvent(args: TrackEventArguments): Promise<Result<undefined>> {
     const request = new HttpRequest(
       this.createURL(`/journeys/events`),
       "POST",
-      new HttpHeaders({ "x-api-key": this.clientConfig.apiKeySecret }),
+      this.getHeaders(),
       {
         email: args.email,
         tag: args.tag,
         recordedAt: args.recordedAt ? args.recordedAt.toISOString() : undefined,
         properties: args.properties
-          ? stringifyProperties(args.properties)
+          ? this.stringifyProperties(args.properties)
           : undefined,
       }
     );
+
     try {
       const response = await this.httpClient.send(request);
       const remaining = response.getHeaders().byName("X-RateLimit-Remaining");
+
       return {
         success: true,
         requestId: JSON.parse(response.getBody()).meta.requestId,
-        callsRemaining: remaining ? parseInt(remaining) : undefined,
+        callsRemaining: remaining ? parseInt(remaining, 10) : 0,
         data: undefined,
       };
     } catch (error) {
-      return Client.handleError(error);
+      return this.handleError(error);
     }
   }
 
-  /**
-   * Track properties of a user.
-   * @param args The input to track the user properties.
-   * @returns A response stating the properties were tracked correctly,
-   * or an error stating the tracking failed (bad parameters, not authorized...).
-   */
   async trackProperties(
     args: TrackPropertiesArguments
   ): Promise<Result<undefined>> {
     const request = new HttpRequest(
       this.createURL(`/journeys/properties`),
       "POST",
-      new HttpHeaders({ "x-api-key": this.clientConfig.apiKeySecret }),
+      this.getHeaders(),
       {
         email: args.email,
         properties: args.properties
-          ? stringifyProperties(args.properties)
+          ? this.stringifyProperties(args.properties)
           : undefined,
       }
     );
+
     try {
       const response = await this.httpClient.send(request);
       const remaining = response.getHeaders().byName("X-RateLimit-Remaining");
+
       return {
         success: true,
         requestId: JSON.parse(response.getBody()).meta.requestId,
-        callsRemaining: remaining ? parseInt(remaining) : undefined,
+        callsRemaining: remaining ? parseInt(remaining, 10) : 0,
         data: undefined,
       };
     } catch (error) {
-      return Client.handleError(error);
+      return this.handleError(error);
     }
   }
 
-  /**
-   * Get a tracking snippet.
-   * @param args The parameters to retrieve the Tracking Snippet.
-   * @returns A response with the snippet, or an error stating something
-   * failed (not found, not authorized...).
-   */
   async getTrackingSnippet(
     args: GetTrackingSnippetArguments
   ): Promise<Result<TrackingSnippetResponse>> {
@@ -150,54 +170,54 @@ export class Client {
     const request = new HttpRequest(
       this.createURL(`/tracking/snippet?domain=${encodeURIComponent(domain)}`),
       "GET",
-      new HttpHeaders({ "x-api-key": this.clientConfig.apiKeySecret })
+      this.getHeaders()
     );
+
     try {
       const response = await this.httpClient.send(request);
       const parsed = JSON.parse(response.getBody()).data;
       const remaining = response.getHeaders().byName("X-RateLimit-Remaining");
       const snippet = parsed.snippet;
+
       return {
         success: true,
         requestId: JSON.parse(response.getBody()).meta.requestId,
-        callsRemaining: remaining ? parseInt(remaining) : undefined,
+        callsRemaining: remaining ? parseInt(remaining, 10) : 0,
         data: {
           domain: domain,
           snippet: snippet,
         },
       };
     } catch (error) {
-      return Client.handleError(error);
+      return this.handleError(error);
     }
   }
 
-  /**
-   * Get specs about the API Key such as the permissions and the property-roup-name.
-   * @returns The Api Key Specs.
-   */
-  async getApiKeySpecs(): Promise<Result<ApiKeySpecs>> {
+  async getApiKeyDetails(): Promise<Result<ApiKeyDetails>> {
     const request = new HttpRequest(
       this.createURL(`/validate`),
       "GET",
-      new HttpHeaders({ "x-api-key": this.clientConfig.apiKeySecret })
+      this.getHeaders()
     );
+
     try {
       const response = await this.httpClient.send(request);
-      const specs: ApiKeySpecs = JSON.parse(response.getBody()).data;
+      const details: ApiKeyDetails = JSON.parse(response.getBody()).data;
       const remaining = response.getHeaders().byName("X-RateLimit-Remaining");
+
       return {
         success: true,
         requestId: JSON.parse(response.getBody()).meta.requestId,
-        callsRemaining: remaining ? parseInt(remaining) : undefined,
-        data: specs,
+        callsRemaining: remaining ? parseInt(remaining, 10) : 0,
+        data: details,
       };
     } catch (error) {
-      return Client.handleError(error);
+      return this.handleError(error);
     }
   }
 }
 
-export enum JourneyClientError {
+export enum APIError {
   ServerError = "ServerError",
   UnauthorizedError = "UnauthorizedError",
   BadArgumentsError = "BadArgumentsError",
@@ -206,44 +226,31 @@ export enum JourneyClientError {
   UnknownError = "UnknownError",
 }
 
-function statusCodeToError(status: number): JourneyClientError {
+function statusCodeToError(status: number): APIError {
   switch (status) {
     case 401:
-      return JourneyClientError.UnauthorizedError;
+      return APIError.UnauthorizedError;
     case 400:
-      return JourneyClientError.BadArgumentsError;
+      return APIError.BadArgumentsError;
     case 429:
-      return JourneyClientError.TooManyRequests;
+      return APIError.TooManyRequests;
     case 404:
-      return JourneyClientError.NotFoundError;
+      return APIError.NotFoundError;
     case 500:
-      return JourneyClientError.ServerError;
+      return APIError.ServerError;
     default:
-      return JourneyClientError.UnknownError;
+      return APIError.UnknownError;
   }
 }
 
 export type Properties = { [key: string]: string | number | boolean | Date };
-
-function stringifyProperties(properties: Properties) {
-  const newProperties: Properties = {};
-  for (const key of Object.keys(properties)) {
-    const value = properties[key];
-    if (value instanceof Date) {
-      newProperties[key] = value.toISOString();
-    } else {
-      newProperties[key] = value.toString();
-    }
-  }
-  return newProperties;
-}
 
 export type Result<T> = Success<T> | Error;
 
 export interface Success<T> {
   success: true;
   requestId: string;
-  callsRemaining: number | undefined;
+  callsRemaining: number;
   data: T;
 }
 
@@ -251,10 +258,10 @@ export interface Error {
   success: false;
   requestId: string | undefined;
   callsRemaining: number | undefined;
-  error: JourneyClientError;
+  error: APIError;
 }
 
-export interface ApiKeySpecs {
+export interface ApiKeyDetails {
   propertyGroupName: string;
   permissions: string[];
 }

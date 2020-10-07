@@ -6,7 +6,7 @@ import {
   HttpRequest,
   HttpRequestError,
   HttpResponse,
-} from "../lib/HttpClient";
+} from "./HttpClient";
 
 describe("HttpHeaders", () => {
   it("works", () => {

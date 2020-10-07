@@ -1,10 +1,10 @@
 # journy.io Node.js SDK
 
-This is the Node.js SDK for [journy.io](https://journy.io?utm_source=github&utm_content=readme-js-sdk).
+This is the official Node.js SDK for [journy.io](https://journy.io?utm_source=github&utm_content=readme-js-sdk).
 
 ## 💾 Installation
 
-You can use your package manager (`npm` or `yarn`) to install the SDK. Therefore run:
+You can use your package manager (`npm` or `yarn`) to install the SDK:
 
 ```bash
 npm install --save @journyio/sdk
@@ -20,134 +20,109 @@ yarn add @journyio/sdk
 
 To start, first import the client.
 
-```typescript
+```ts
 import { Client, createClient } from "@journyio/sdk";
 ```
 
-### Configuration and Client creation
+### Configuration
 
-To create a journy-io Client use the `createJournyClient(config: ClientConfig)`-function.
-A `ClientConfig`-configuration should be given to the `createJournyClient(config: ClientConfig)`-function.
+To be able to use the journy.io SDK you need to generate an API key. If you don't have one you can create one in [journy.io](https://app.journy.io?utm_source=github&utm_content=readme-js-sdk).
 
-The `ClientConfig` includes two fields: the `apiKeySecret`-field and the `apiUrl`-field. 
-The `apiKeySecret` should include the API Key secret generated from the [journy.io](https://journy.io?utm_source=github&utm_content=readme-js-sdk) application.
-The `apiUrl` should include the API URL of the [journy.io](https://journy.io?utm_source=github&utm_content=readme-js-sdk) API.  
+If you don't have an account yet, you can create one in [journy.io](https://app.journy.io/register?utm_source=github&utm_content=readme-js-sdk) or [request a demo first](https://www.journy.io/book-demo?utm_source=github&utm_content=readme-js-sdk).
 
-```typescript
-const config = {
-    apiKeySecret: "api-key-secret",
-    apiUrl: "https://api.journy.io"
-};
+You can go to your settings, under the *sources*-tab, to create and edit API keys. Make sure to give the correct permissions to the API Key and set the correct property group name.
+
+```ts
+const client: Client = createClient({
+  apiKey: "api-key",
+});
 ```
 
-```typescript
-const client: Client = createClient(config);
-```
+If you want to use a custom [HttpClient](/lib/HttpClient.ts#L70), you can create a client as follows:
 
-or if you want to use a custom [HttpClient](/lib/HttpClient.ts#L70)-implementation you can create a client as follows:
-
-```typescript
+```ts
 const httpClient: HttpClient = new OwnHttpClientImplementation();
-const client: Client = new Client(httpClient, config);
+const client = new Client(httpClient, config);
 ```
 
 ### Methods
 
-#### getApiKeySpecs
+#### Get API key details
 
-```typescript
-await client.getApiKeySpecs();
-```
+```ts
+const result = await client.getApiKeyDetails();
 
-The response of the method-call includes the *property-group-name* configured in the [journy.io](https://journy.io?utm_source=github&utm_content=readme-js-sdk) application and a list of *permissions* the API Key has.
-
-
-#### trackEvent
-
-```typescript
-await client.trackEvent(args);
-```
-
-This method can be used to track a user event.
-
-The `trackEvent`-arguments interface is:
-
-```typescript
-interface args {
-    email: string;
-    tag: string;
-    recordedAt?: DateTime;
-    journeyProperties?: Properties;
+if (result.success) {
+  console.log(result.data.propertyGroupName); // string
+  console.log(result.data.permissions); // string[]
+  console.log(result.data.callsRemaining); // number
 }
 ```
 
-#### trackProperties
+#### Track event for a user
 
-```typescript
-await client.trackProperties(args);
+```ts
+await client.trackEvent({
+  // required
+  email: "name@domain.tld",
+  tag: "login",
+
+  // optional
+  recordedAt: new Date(),
+  properties: {
+    age: 26,
+    name: "John Doe",
+    is_developer: true,
+    this_property_will_be_deleted: "",
+  },
+});
 ```
 
-This method can be used to track user properties.
+#### Set, update or delete properties for a user
 
-The `trackProperties`-arguments interface is:
+```ts
+await client.trackProperties({
+  email: "name@domain.tld",
+  properties: {
+    age: 26,
+    name: "John Doe",
+    is_developer: true,
+    this_property_will_be_deleted: "",
+  },
+});
+```
 
-```typescript
-interface args {
-  email: string;
-  properties: Properties;
+#### Get tracking snippet for a domain
+
+```ts
+const result = await client.getTrackingSnippet({
+  domain: "www.journy.io",
+});
+
+if (result.success) {
+  console.log(result.data.snippet); // string
+  console.log(result.data.domain); // string
 }
 ```
 
-#### getTrackingSnippet
+### Handling errors
 
-```typescript
-await client.getTrackingSnippet(args);
-```
+Every call will return a result, we don't throw errors when a call fails because working with `Error` instances is not great in JavaScript.
 
-This method will retrieve a tracking snippet of a specific domain.
+You can check whether the call succeeded using `result.success`:
 
-The `getTrackingSnippet`-arguments interface is:
+```ts
+const result = await client.getTrackingSnippet({
+  domain: "www.journy.io",
+});
 
-```typescript
-interface args {
-  domain: string;
-}
-``` 
-
-### Response types
-
-> Note: instead of `await` (as in the examples above) you can also use `.then()` to interact with the responses.
-
-The basic method-response type is the `Result<T>` whereas `T` is the type of the data if the response should provide data. 
-
-```typescript
-export type Result<T> = Success<T> | Error;
-```
-
-```typescript
-export interface Success<T> {
-  success: true;
-  callsRemaining: number | undefined;
-  data: T;
-}
-
-export interface Error {
-  success: false;
-  callsRemaining: number | undefined;
-  error: JourneyClientError;
+if (!result.success) {
+  console.log(result.error); // string
+  console.log(result.requestId); // string
 }
 ```
 
-The `success`-field states if the method-call succeeded. The `callsRemaining`-field states the amount of requests the API Key still can perform in the current timeframe (more information about the Rate-Limiting can be found in our [API documentation](https://journy-io.readme.io/docs).
-
-In case the `success`-field is `true`, the return-type will be `Succes<T>` and the `data`-field will contain the result data.
-In case the `success`-field is `false`, the return-type will be `Error` and the `error`-field will contain the error.
-
-## 🔑 Account creation and API Key management
-
-To be able to use the journy.io SDK you should have an API Key. If you don't have one you can create one in the [journy.io](https://journy.io?utm_source=github&utm_content=readme-js-sdk) application. 
-If you don't have an account already, you can create one in [the journy.io application](https://app.journy.io/register?utm_source=github&utm_content=readme-js-sdk). 
-After creating an account - or if you already have an account - you can go to your settings, under the *sources*-tab, to create and edit API Keys. Make sure to give the correct permissions to the API Key and set the correct property-group-name.
+The request ID can be useful to when viewing logs in [journy.io](https://app.journy.io?utm_source=github&utm_content=readme-js-sdk).
 
 ## 📬 API
 
@@ -155,16 +130,14 @@ More documentation and information about the [journy.io](https://journy.io?utm_s
 
 ## 💯 Tests
 
-Tests can be found in the `/tests`-folder. To run the tests run:
+To run the tests:
 
 ```bash
-yarn test
+npm run test
 ```
 
-## 📄 Examples
+## ❓ Help
 
-Example(s) can be found in the `/examples`-folder.
+We welcome your feedback, ideas and suggestions. We really want to make your life easier, so if we’re falling short or should be doing something different, we want to hear about it.
 
-## ❓ Feedback/ questions or problems?
-
-In case of questions, problems or feedback about the SDK (or the API). Do not hesitate to create an issue.
+You can create an issue or contact us via the chat on our website.
