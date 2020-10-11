@@ -1,6 +1,8 @@
 {
   "name": "@journyio/sdk",
   "description": "The official Node.js SDK for the journy.io platform.",
+  "homepage": "https://github.com/journy-io/js-sdk#journyio-nodejs-sdk",
+  "repository": "github:journy-io/js-sdk",
   "version": "0.0.0",
   "author": "journy.io",
   "license": "MIT",
