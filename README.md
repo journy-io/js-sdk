@@ -130,7 +130,7 @@ The request ID can be useful when viewing API logs in [journy.io](https://app.jo
 
 ## 📬 API
 
-More documentation and information about the [journy.io](https://journy.io?utm_source=github&utm_content=readme-js-sdk) API can be found in our [API documentation](https://journy-io.readme.io/reference).
+More documentation and information about our API can be found in the [API documentation](https://journy-io.readme.io/reference).
 
 ## 💯 Tests
 
@@ -144,4 +144,4 @@ npm run test
 
 We welcome your feedback, ideas and suggestions. We really want to make your life easier, so if we’re falling short or should be doing something different, we want to hear about it.
 
-You can create an issue or contact us via the chat on our website.
+Please create an issue or contact us via the chat on our website.
