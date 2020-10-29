@@ -1,3 +1,5 @@
+![journy.io](banner.png)
+
 # journy.io Node.js SDK
 
 This is the official Node.js SDK for [journy.io](https://journy.io?utm_source=github&utm_content=readme-js-sdk).
