@@ -157,7 +157,6 @@ describe("Client", () => {
                 "GetTrackingSnippet",
                 "ReadUserProfile",
               ],
-              propertyGroupName: "test",
             },
             meta: {
               requestId: "requestId",
@@ -196,7 +195,6 @@ describe("Client", () => {
           "GetTrackingSnippet",
           "ReadUserProfile",
         ]);
-        expect(response.data.propertyGroupName).toEqual("test");
       }
 
       const response2 = await client2.getApiKeyDetails();
