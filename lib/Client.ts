@@ -273,7 +273,6 @@ export interface Error {
 }
 
 export interface ApiKeyDetails {
-  propertyGroupName: string;
   permissions: string[];
 }
 
