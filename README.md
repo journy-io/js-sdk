@@ -2,6 +2,8 @@
 
 # journy.io Node.js SDK
 
+![npm](https://img.shields.io/npm/v/@journyio/sdk?color=%234d84f5&style=flat-square)
+
 This is the official Node.js SDK for [journy.io](https://journy.io?utm_source=github&utm_content=readme-js-sdk).
 
 ## 💾 Installation
