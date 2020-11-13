@@ -42,7 +42,7 @@ const client = createClient({
 });
 ```
 
-If you want to use a custom [HttpClient](/lib/HttpClient.ts#L70), you can create a client as follows:
+If you want to use a custom [HttpClient](https://github.com/journy-io/http/blob/main/lib/HttpClient.ts):
 
 ```ts
 const httpClient = new OwnHttpClientImplementation();
