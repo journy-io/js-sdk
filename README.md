@@ -37,7 +37,7 @@ If you don't have an account yet, you can create one in [journy.io](https://app.
 Go to your settings, under the *sources*-tab, to create and edit API keys. Make sure to give the correct permissions to the API Key and set the correct property group name.
 
 ```ts
-const client: Client = createClient({
+const client = createClient({
   apiKey: "api-key",
 });
 ```
@@ -45,7 +45,7 @@ const client: Client = createClient({
 If you want to use a custom [HttpClient](/lib/HttpClient.ts#L70), you can create a client as follows:
 
 ```ts
-const httpClient: HttpClient = new OwnHttpClientImplementation();
+const httpClient = new OwnHttpClientImplementation();
 const client = new Client(httpClient, config);
 ```
 
