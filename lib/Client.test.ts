@@ -313,8 +313,8 @@ describe("Client", () => {
     });
   });
 
-  describe("trackProperties", () => {
-    it("correctly tracks properties", async () => {
+  describe("updateProperties", () => {
+    it("correctly updates properties", async () => {
       const propertiesClient = new HttpClientFixed(createdResponse);
       const expectedRequest = new HttpRequest(
         new URL("https://api.test.com/journeys/properties"),
@@ -335,7 +335,7 @@ describe("Client", () => {
       );
 
       const client = new Client(propertiesClient, clientConfig);
-      const response = await client.trackProperties({
+      const response = await client.updateProperties({
         email: "test@journy.io",
         properties: {
           likesDog: true,
@@ -367,7 +367,7 @@ describe("Client", () => {
       );
 
       const client = new Client(propertiesClient, clientConfig);
-      const response1 = await client.trackProperties({
+      const response1 = await client.updateProperties({
         email: "test@journy.io",
         properties: {},
       });
