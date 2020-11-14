@@ -138,8 +138,8 @@ export class Client {
     };
   }
 
-  async trackProperties(
-    args: TrackPropertiesArguments
+  async updateProperties(
+    args: UpdatePropertiesArguments
   ): Promise<Result<undefined>> {
     const request = new HttpRequest(
       this.createURL(`/journeys/properties`),
@@ -283,7 +283,7 @@ export interface TrackEventArguments {
   properties?: Properties;
 }
 
-export interface TrackPropertiesArguments {
+export interface UpdatePropertiesArguments {
   email: string;
   properties: Properties;
 }
