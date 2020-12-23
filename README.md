@@ -1,4 +1,8 @@
+[![journy.io](banner.png)](https://journy.io/?utm_source=github&utm_content=readme-js-sdk)
+
 # journy.io Node.js SDK
+
+![npm](https://img.shields.io/npm/v/@journyio/sdk?color=%234d84f5&style=flat-square)
 
 This is the official Node.js SDK for [journy.io](https://journy.io?utm_source=github&utm_content=readme-js-sdk).
 
@@ -30,18 +34,18 @@ To be able to use the journy.io SDK you need to generate an API key. If you don'
 
 If you don't have an account yet, you can create one in [journy.io](https://app.journy.io/register?utm_source=github&utm_content=readme-js-sdk) or [request a demo first](https://www.journy.io/book-demo?utm_source=github&utm_content=readme-js-sdk).
 
-You can go to your settings, under the *sources*-tab, to create and edit API keys. Make sure to give the correct permissions to the API Key and set the correct property group name.
+Go to your settings, under the *sources*-tab, to create and edit API keys. Make sure to give the correct permissions to the API Key and set the correct property group name.
 
 ```ts
-const client: Client = createClient({
+const client = createClient({
   apiKey: "api-key",
 });
 ```
 
-If you want to use a custom [HttpClient](/lib/HttpClient.ts#L70), you can create a client as follows:
+If you want to use a custom [HttpClient](https://github.com/journy-io/http/blob/main/lib/HttpClient.ts):
 
 ```ts
-const httpClient: HttpClient = new OwnHttpClientImplementation();
+const httpClient = new OwnHttpClientImplementation();
 const client = new Client(httpClient, config);
 ```
 
@@ -124,11 +128,11 @@ if (!result.success) {
 }
 ```
 
-The request ID can be useful to when viewing logs in [journy.io](https://app.journy.io?utm_source=github&utm_content=readme-js-sdk).
+The request ID can be useful when viewing API logs in [journy.io](https://app.journy.io?utm_source=github&utm_content=readme-js-sdk).
 
 ## 📬 API
 
-More documentation and information about the [journy.io](https://journy.io?utm_source=github&utm_content=readme-js-sdk) API can be found in our [API documentation](https://journy-io.readme.io/reference).
+More documentation and information about our API can be found in the [API documentation](https://journy-io.readme.io/reference).
 
 ## 💯 Tests
 
@@ -142,4 +146,4 @@ npm run test
 
 We welcome your feedback, ideas and suggestions. We really want to make your life easier, so if we’re falling short or should be doing something different, we want to hear about it.
 
-You can create an issue or contact us via the chat on our website.
+Please create an issue or contact us via the chat on our website.
