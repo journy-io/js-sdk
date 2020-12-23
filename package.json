@@ -33,18 +33,18 @@
     "collectCoverage": true,
     "testEnvironment": "node"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@journyio/http": "2.0.1"
+  },
   "peerDependencies": {
-    "axios": "^0.20.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.11.6",
-    "@babel/preset-env": "^7.11.5",
-    "@babel/preset-typescript": "^7.10.4",
+    "@babel/core": "7.11.6",
+    "@babel/preset-env": "7.11.5",
+    "@babel/preset-typescript": "7.10.4",
     "@types/jest": "26.0.10",
     "@typescript-eslint/eslint-plugin": "3.10.1",
     "@typescript-eslint/parser": "3.10.1",
-    "axios": "^0.20.0",
     "eslint": "7.7.0",
     "eslint-config-prettier": "6.11.0",
     "eslint-plugin-import": "2.22.0",

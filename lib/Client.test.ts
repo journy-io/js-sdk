@@ -1,11 +1,11 @@
 import { Client, createClient, APIError, Config } from "./Client";
 import {
-  HttpClientMatch,
-  HttpClientThatThrows,
   HttpHeaders,
   HttpRequest,
   HttpResponse,
-} from "./HttpClient";
+  HttpClientFixed,
+} from "@journyio/http";
+import { URL } from "url";
 
 describe("createClient", () => {
   it("fails when the config is invalid", async () => {
@@ -85,7 +85,7 @@ describe("Client", () => {
 
   describe("getApiKeySpecs", () => {
     it("correctly errors when too many requests were made", async () => {
-      const validateClient = new HttpClientMatch(tooManyRequestsResponse);
+      const validateClient = new HttpClientFixed(tooManyRequestsResponse);
       const expectedRequest = new HttpRequest(
         new URL("https://api.test.com/validate"),
         "GET",
@@ -105,7 +105,7 @@ describe("Client", () => {
     });
 
     it("correctly perseveres an unknown error", async () => {
-      const validateClient = new HttpClientMatch(unknownErrorResponse);
+      const validateClient = new HttpClientFixed(unknownErrorResponse);
       const expectedRequest = new HttpRequest(
         new URL("https://api.test.com/validate"),
         "GET",
@@ -125,7 +125,7 @@ describe("Client", () => {
     });
 
     it("correctly perseveres a server error", async () => {
-      const validateClient = new HttpClientMatch(serverErrorResponse);
+      const validateClient = new HttpClientFixed(serverErrorResponse);
       const expectedRequest = new HttpRequest(
         new URL("https://api.test.com/validate"),
         "GET",
@@ -145,7 +145,7 @@ describe("Client", () => {
     });
 
     it("should correctly get api key specs", async () => {
-      const validateClient1 = new HttpClientMatch(
+      const validateClient1 = new HttpClientFixed(
         new HttpResponse(
           200,
           rateLimitHeader,
@@ -170,7 +170,7 @@ describe("Client", () => {
         keySecretHeader
       );
 
-      const validateClient2 = new HttpClientMatch(notFoundResponse);
+      const validateClient2 = new HttpClientFixed(notFoundResponse);
       const expectedRequest2 = new HttpRequest(
         new URL("https://api.test.com/validate"),
         "GET",
@@ -179,7 +179,6 @@ describe("Client", () => {
 
       const client = new Client(validateClient1, clientConfig);
       const client2 = new Client(validateClient2, nonExistingClientConfig);
-      const client3 = new Client(new HttpClientThatThrows(), clientConfig);
 
       const response = await client.getApiKeyDetails();
       expect(validateClient1.getLastRequest()).toEqual(expectedRequest1);
@@ -203,28 +202,20 @@ describe("Client", () => {
       if (response2.success === false) {
         expect(response2.error).toEqual(APIError.NotFoundError);
       }
-
-      const response3 = await client3.getApiKeyDetails();
-      expect(response3).toBeDefined();
-      expect(response3.success).toBeFalsy();
-      if (!response3.success) {
-        expect(response3.error).toEqual(APIError.UnknownError);
-      }
-      expect(response3.callsRemaining).toBeUndefined();
     });
   });
 
   describe("trackEvent", () => {
     it("correctly tracks an event", async () => {
-      const eventClient = new HttpClientMatch(createdResponse);
+      const eventClient = new HttpClientFixed(createdResponse);
       const expectedRequest = new HttpRequest(
         new URL("https://api.test.com/journeys/events"),
         "POST",
         keySecretHeader,
-        {
+        JSON.stringify({
           email: "test@journy.io",
           tag: "tag",
-        }
+        })
       );
 
       const client = new Client(eventClient, clientConfig);
@@ -238,12 +229,12 @@ describe("Client", () => {
       expect(response.callsRemaining).toEqual(5000);
     });
     it("correctly handles dates", async () => {
-      const eventClient = new HttpClientMatch(createdResponse);
+      const eventClient = new HttpClientFixed(createdResponse);
       const expectedRequest = new HttpRequest(
         new URL("https://api.test.com/journeys/events"),
         "POST",
         keySecretHeader,
-        {
+        JSON.stringify({
           email: "test@journy.io",
           tag: "tag",
           recordedAt: "2019-01-01T00:00:00.000Z",
@@ -253,7 +244,7 @@ describe("Client", () => {
             likesDog: "true",
             firstDogName: "Journy",
           },
-        }
+        })
       );
 
       const client = new Client(eventClient, clientConfig);
@@ -262,9 +253,9 @@ describe("Client", () => {
         tag: "tag",
         recordedAt: new Date("2019-01-01T00:00:00.000Z"),
         properties: {
-          likesDog: true,
           hasDogs: 2,
           boughtDog: new Date("2020-08-27T12:08:21+00:00"),
+          likesDog: true,
           firstDogName: "Journy",
         },
       });
@@ -276,15 +267,15 @@ describe("Client", () => {
     });
 
     it("correctly states when the input is invalid", async () => {
-      const eventClient = new HttpClientMatch(badRequestResponse);
+      const eventClient = new HttpClientFixed(badRequestResponse);
       const expectedRequest = new HttpRequest(
         new URL("https://api.test.com/journeys/events"),
         "POST",
         keySecretHeader,
-        {
+        JSON.stringify({
           email: "notAnEmail",
           tag: "tag",
-        }
+        })
       );
 
       const client = new Client(eventClient, clientConfig);
@@ -306,12 +297,12 @@ describe("Client", () => {
 
   describe("trackProperties", () => {
     it("correctly tracks properties", async () => {
-      const propertiesClient = new HttpClientMatch(createdResponse);
+      const propertiesClient = new HttpClientFixed(createdResponse);
       const expectedRequest = new HttpRequest(
         new URL("https://api.test.com/journeys/properties"),
         "POST",
         new HttpHeaders({ "x-api-key": "key-secret" }),
-        {
+        JSON.stringify({
           email: "test@journy.io",
           properties: {
             hasDogs: "2",
@@ -319,16 +310,16 @@ describe("Client", () => {
             likesDog: "true",
             firstDogName: "Journy",
           },
-        }
+        })
       );
 
       const client = new Client(propertiesClient, clientConfig);
       const response = await client.trackProperties({
         email: "test@journy.io",
         properties: {
-          likesDog: true,
           hasDogs: 2,
           boughtDog: new Date("2020-08-27T12:08:21+00:00"),
+          likesDog: true,
           firstDogName: "Journy",
         },
       });
@@ -340,15 +331,15 @@ describe("Client", () => {
     });
 
     it("correctly shows when the input parameters are invalid", async () => {
-      const propertiesClient = new HttpClientMatch(badRequestResponse);
+      const propertiesClient = new HttpClientFixed(badRequestResponse);
       const expectedRequest = new HttpRequest(
         new URL("https://api.test.com/journeys/properties"),
         "POST",
         new HttpHeaders({ "x-api-key": "key-secret" }),
-        {
+        JSON.stringify({
           email: "test@journy.io",
           properties: {},
-        }
+        })
       );
 
       const client = new Client(propertiesClient, clientConfig);
@@ -370,7 +361,7 @@ describe("Client", () => {
 
   describe("getTrackingSnippet", () => {
     it("correctly returns an existing snippet", async () => {
-      const trackingsnippetClient = new HttpClientMatch(
+      const trackingsnippetClient = new HttpClientFixed(
         new HttpResponse(
           200,
           new HttpHeaders({ "X-RateLimit-Remaining": "5000" }),
@@ -406,7 +397,7 @@ describe("Client", () => {
       }
     });
     it("correctly notifies a domain not being found", async () => {
-      const trackingsnippetClient = new HttpClientMatch(notFoundResponse);
+      const trackingsnippetClient = new HttpClientFixed(notFoundResponse);
       const expectedRequest = new HttpRequest(
         new URL("https://api.test.com/tracking/snippet?domain=nonexisting.com"),
         "GET",
@@ -417,6 +408,7 @@ describe("Client", () => {
       const response = await client.getTrackingSnippet({
         domain: "nonexisting.com",
       });
+
       expect(trackingsnippetClient.getLastRequest()).toEqual(expectedRequest);
       expect(response).toBeDefined();
       expect(response.success).toBeFalsy();

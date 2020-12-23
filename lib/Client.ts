@@ -1,22 +1,20 @@
 import {
   HttpClient,
-  HttpClientAxios,
+  HttpClientNode,
   HttpHeaders,
   HttpRequest,
-  HttpRequestError,
-} from "./HttpClient";
-import axios from "axios";
+  HttpResponse,
+} from "@journyio/http";
+import { URL } from "url";
 
 export interface Config {
   apiKey: string;
   apiUrl?: string;
+  requestTimeout?: number;
 }
 
 export function createClient(config: Config): Client {
-  const instance = axios.create();
-  delete instance.defaults.headers.common;
-  const httpClient = new HttpClientAxios(instance, 5000);
-
+  const httpClient = new HttpClientNode(config.requestTimeout || 5000);
   return new Client(httpClient, config);
 }
 
@@ -47,19 +45,27 @@ export class Client {
     return new URL(url + path);
   }
 
+  private static parseCallsRemaining(
+    httpResponse: HttpResponse
+  ): string | undefined {
+    const remaining = httpResponse.getHeaders().byName("X-RateLimit-Remaining");
+    if (Array.isArray(remaining)) return undefined;
+    else return remaining;
+  }
+
   // noinspection JSMethodCanBeStatic
-  private handleError(error: Error): Error {
-    if (error instanceof HttpRequestError) {
-      const remaining = error.getHeaders().byName("X-RateLimit-Remaining");
+  private handleError(httpResponse?: HttpResponse): Error {
+    if (httpResponse instanceof HttpResponse) {
+      const remaining = Client.parseCallsRemaining(httpResponse);
 
       return {
         success: false,
-        requestId: error.getApiRequestId(),
-        callsRemaining: remaining ? parseInt(remaining) : undefined,
-        error: statusCodeToError(error.getStatusCode()),
+        requestId: JSON.parse(httpResponse.getBody()).meta.requestId,
+        callsRemaining:
+          remaining !== undefined ? parseInt(remaining) : undefined,
+        error: statusCodeToError(httpResponse.getStatusCode()),
       };
     }
-
     return {
       success: false,
       requestId: undefined,
@@ -108,24 +114,29 @@ export class Client {
       this.createURL(`/journeys/events`),
       "POST",
       this.getHeaders(),
-      {
+      JSON.stringify({
         email: args.email,
         tag: args.tag,
         recordedAt: args.recordedAt ? args.recordedAt.toISOString() : undefined,
         properties: args.properties
           ? this.stringifyProperties(args.properties)
           : undefined,
-      }
+      })
     );
 
     try {
       const response = await this.httpClient.send(request);
-      const remaining = response.getHeaders().byName("X-RateLimit-Remaining");
+
+      if (response.getStatusCode() < 200 || response.getStatusCode() >= 300) {
+        return this.handleError(response);
+      }
+
+      const remaining = Client.parseCallsRemaining(response);
 
       return {
         success: true,
         requestId: JSON.parse(response.getBody()).meta.requestId,
-        callsRemaining: remaining ? parseInt(remaining, 10) : 0,
+        callsRemaining: remaining !== undefined ? parseInt(remaining, 10) : 0,
         data: undefined,
       };
     } catch (error) {
@@ -140,22 +151,27 @@ export class Client {
       this.createURL(`/journeys/properties`),
       "POST",
       this.getHeaders(),
-      {
+      JSON.stringify({
         email: args.email,
         properties: args.properties
           ? this.stringifyProperties(args.properties)
           : undefined,
-      }
+      })
     );
 
     try {
       const response = await this.httpClient.send(request);
-      const remaining = response.getHeaders().byName("X-RateLimit-Remaining");
+
+      if (response.getStatusCode() < 200 || response.getStatusCode() >= 300) {
+        return this.handleError(response);
+      }
+
+      const remaining = Client.parseCallsRemaining(response);
 
       return {
         success: true,
         requestId: JSON.parse(response.getBody()).meta.requestId,
-        callsRemaining: remaining ? parseInt(remaining, 10) : 0,
+        callsRemaining: remaining !== undefined ? parseInt(remaining, 10) : 0,
         data: undefined,
       };
     } catch (error) {
@@ -175,14 +191,19 @@ export class Client {
 
     try {
       const response = await this.httpClient.send(request);
+
+      if (response.getStatusCode() < 200 || response.getStatusCode() >= 300) {
+        return this.handleError(response);
+      }
+
       const parsed = JSON.parse(response.getBody()).data;
-      const remaining = response.getHeaders().byName("X-RateLimit-Remaining");
+      const remaining = Client.parseCallsRemaining(response);
       const snippet = parsed.snippet;
 
       return {
         success: true,
         requestId: JSON.parse(response.getBody()).meta.requestId,
-        callsRemaining: remaining ? parseInt(remaining, 10) : 0,
+        callsRemaining: remaining !== undefined ? parseInt(remaining, 10) : 0,
         data: {
           domain: domain,
           snippet: snippet,
@@ -203,12 +224,16 @@ export class Client {
     try {
       const response = await this.httpClient.send(request);
       const details: ApiKeyDetails = JSON.parse(response.getBody()).data;
-      const remaining = response.getHeaders().byName("X-RateLimit-Remaining");
+      const remaining = Client.parseCallsRemaining(response);
+
+      if (response.getStatusCode() < 200 || response.getStatusCode() >= 300) {
+        return this.handleError(response);
+      }
 
       return {
         success: true,
         requestId: JSON.parse(response.getBody()).meta.requestId,
-        callsRemaining: remaining ? parseInt(remaining, 10) : 0,
+        callsRemaining: remaining !== undefined ? parseInt(remaining, 10) : 0,
         data: details,
       };
     } catch (error) {
