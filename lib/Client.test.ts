@@ -4,8 +4,15 @@ import {
   HttpRequest,
   HttpResponse,
   HttpClientFixed,
+  HttpClient,
 } from "@journyio/http";
 import { URL } from "url";
+
+class HttpClientThatThrows implements HttpClient {
+  async send(request: HttpRequest): Promise<HttpResponse> {
+    throw new Error(`error`);
+  }
+}
 
 describe("createClient", () => {
   it("fails when the config is invalid", async () => {
@@ -67,6 +74,11 @@ describe("Client", () => {
     rateLimitHeader,
     defaultResponse
   );
+  const unAuthorizedResponse = new HttpResponse(
+    401,
+    rateLimitHeader,
+    defaultResponse
+  );
   const notFoundResponse = new HttpResponse(
     404,
     rateLimitHeader,
@@ -103,7 +115,6 @@ describe("Client", () => {
         expect(response.error).toEqual(APIError.TooManyRequests);
       }
     });
-
     it("correctly perseveres an unknown error", async () => {
       const validateClient = new HttpClientFixed(unknownErrorResponse);
       const expectedRequest = new HttpRequest(
@@ -123,7 +134,6 @@ describe("Client", () => {
         expect(response.error).toEqual(APIError.UnknownError);
       }
     });
-
     it("correctly perseveres a server error", async () => {
       const validateClient = new HttpClientFixed(serverErrorResponse);
       const expectedRequest = new HttpRequest(
@@ -141,6 +151,25 @@ describe("Client", () => {
       expect(response.callsRemaining).toEqual(5000);
       if (!response.success) {
         expect(response.error).toEqual(APIError.ServerError);
+      }
+    });
+
+    it("correctly gives an unknown error if something bad happens", async () => {
+      const validateClient = new HttpClientThatThrows();
+      const expectedRequest = new HttpRequest(
+        new URL("https://api.test.com/validate"),
+        "GET",
+        keySecretHeader
+      );
+
+      const client = new Client(validateClient, clientConfig);
+      const response = await client.getApiKeyDetails();
+
+      expect(response).toBeDefined();
+      expect(response.success).toBeFalsy();
+      expect(response.callsRemaining).toEqual(undefined);
+      if (!response.success) {
+        expect(response.error).toEqual(APIError.UnknownError);
       }
     });
 
@@ -206,6 +235,22 @@ describe("Client", () => {
   });
 
   describe("trackEvent", () => {
+    it("correctly handles errors being thrown", async () => {
+      const eventClient = new HttpClientThatThrows();
+
+      const client = new Client(eventClient, clientConfig);
+      const response = await client.trackEvent({
+        email: "test@journy.io",
+        tag: "tag",
+      });
+
+      expect(response).toBeDefined();
+      expect(response.success).toBeFalsy();
+      expect(response.callsRemaining).toEqual(undefined);
+      if (!response.success) {
+        expect(response.error).toEqual(APIError.UnknownError);
+      }
+    });
     it("correctly tracks an event", async () => {
       const eventClient = new HttpClientFixed(createdResponse);
       const expectedRequest = new HttpRequest(
@@ -293,9 +338,57 @@ describe("Client", () => {
         expect(response1.error).toEqual(APIError.BadArgumentsError);
       }
     });
+    it("correctly states when the user is unauthorized", async () => {
+      const eventClient = new HttpClientFixed(unAuthorizedResponse);
+      const expectedRequest = new HttpRequest(
+        new URL("https://api.test.com/journeys/events"),
+        "POST",
+        keySecretHeader,
+        JSON.stringify({
+          email: "notAnEmail",
+          tag: "tag",
+        })
+      );
+
+      const client = new Client(eventClient, clientConfig);
+      const response1 = await client.trackEvent({
+        email: "notAnEmail",
+        tag: "tag",
+      });
+
+      expect(eventClient.getLastRequest()).toEqual(expectedRequest);
+      expect(response1).toBeDefined();
+      expect(response1.success).toBeFalsy();
+      expect(response1.callsRemaining).toEqual(5000);
+      if (!response1.success) {
+        expect(response1.error).toBeDefined();
+        expect(response1.error).toEqual(APIError.UnauthorizedError);
+      }
+    });
   });
 
   describe("trackProperties", () => {
+    it("correctly handles errors being thrown", async () => {
+      const propertiesClient = new HttpClientThatThrows();
+
+      const client = new Client(propertiesClient, clientConfig);
+      const response = await client.trackProperties({
+        email: "test@journy.io",
+        properties: {
+          hasDogs: 2,
+          boughtDog: new Date("2020-08-27T12:08:21+00:00"),
+          likesDog: true,
+          firstDogName: "Journy",
+        },
+      });
+
+      expect(response).toBeDefined();
+      expect(response.success).toBeFalsy();
+      expect(response.callsRemaining).toEqual(undefined);
+      if (!response.success) {
+        expect(response.error).toEqual(APIError.UnknownError);
+      }
+    });
     it("correctly tracks properties", async () => {
       const propertiesClient = new HttpClientFixed(createdResponse);
       const expectedRequest = new HttpRequest(
@@ -360,6 +453,21 @@ describe("Client", () => {
   });
 
   describe("getTrackingSnippet", () => {
+    it("correctly handles errors being thrown", async () => {
+      const trackingsnippetClient = new HttpClientThatThrows();
+
+      const client = new Client(trackingsnippetClient, clientConfig);
+      const response = await client.getTrackingSnippet({
+        domain: "journy.io",
+      });
+
+      expect(response).toBeDefined();
+      expect(response.success).toBeFalsy();
+      expect(response.callsRemaining).toEqual(undefined);
+      if (!response.success) {
+        expect(response.error).toEqual(APIError.UnknownError);
+      }
+    });
     it("correctly returns an existing snippet", async () => {
       const trackingsnippetClient = new HttpClientFixed(
         new HttpResponse(
