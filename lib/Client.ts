@@ -15,6 +15,7 @@ export interface Config {
 
 export function createClient(config: Config): Client {
   const httpClient = new HttpClientNode(config.requestTimeout || 5000);
+
   return new Client(httpClient, config);
 }
 
