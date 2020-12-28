@@ -1,7 +1,7 @@
 {
   "name": "@journyio/sdk",
   "description": "The official Node.js SDK for the journy.io platform.",
-  "homepage": "https://github.com/journy-io/js-sdk#journyio-nodejs-sdk",
+  "homepage": "https://github.com/journy-io/js-sdk",
   "repository": "github:journy-io/js-sdk",
   "version": "0.0.0",
   "author": "journy.io",
@@ -35,8 +35,8 @@
     "collectCoverage": true,
     "testEnvironment": "node"
   },
-  "peerDependencies": {
-    "@journyio/http": "2.0.1"
+  "dependencies": {
+    "@journyio/http": "^2.0.1"
   },
   "devDependencies": {
     "@babel/core": "7.11.6",
