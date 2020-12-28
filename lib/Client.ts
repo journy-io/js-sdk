@@ -103,7 +103,7 @@ export class Client {
       if (value instanceof Date) {
         newProperties[key] = value.toISOString();
       } else {
-        newProperties[key] = value.toString();
+        newProperties[key] = value; // Boolean, number and string allowed
       }
     }
     return newProperties;
@@ -115,9 +115,44 @@ export class Client {
       "POST",
       this.getHeaders(),
       JSON.stringify({
+        identification: args.identification,
+        name: args.name,
+        triggeredAt: args.triggeredAt
+          ? args.triggeredAt.toISOString()
+          : undefined,
+      })
+    );
+
+    try {
+      const response = await this.httpClient.send(request);
+
+      if (response.getStatusCode() < 200 || response.getStatusCode() >= 300) {
+        return this.handleError(response);
+      }
+
+      const remaining = Client.parseCallsRemaining(response);
+
+      return {
+        success: true,
+        requestId: JSON.parse(response.getBody()).meta.requestId,
+        callsRemaining: remaining !== undefined ? parseInt(remaining, 10) : 0,
+        data: undefined,
+      };
+    } catch (error) {
+      return this.handleError(error);
+    }
+  }
+
+  async upsertAppUser(
+    args: UpsertAppUserArguments
+  ): Promise<Result<undefined>> {
+    const request = new HttpRequest(
+      this.createURL(`/journeys/properties`),
+      "POST",
+      this.getHeaders(),
+      JSON.stringify({
         email: args.email,
-        tag: args.tag,
-        recordedAt: args.recordedAt ? args.recordedAt.toISOString() : undefined,
+        userId: args.userId,
         properties: args.properties
           ? this.stringifyProperties(args.properties)
           : undefined,
@@ -144,17 +179,21 @@ export class Client {
     }
   }
 
-  async trackProperties(
-    args: TrackPropertiesArguments
+  async upsertAppAccount(
+    args: UpsertAppAccountArguments
   ): Promise<Result<undefined>> {
     const request = new HttpRequest(
       this.createURL(`/journeys/properties`),
       "POST",
       this.getHeaders(),
       JSON.stringify({
-        email: args.email,
+        accountId: args.accountId,
+        name: args.name,
         properties: args.properties
           ? this.stringifyProperties(args.properties)
+          : undefined,
+        accountMemberIds: args.accountMemberIds
+          ? args.accountMemberIds
           : undefined,
       })
     );
@@ -291,16 +330,29 @@ export interface ApiKeyDetails {
   permissions: string[];
 }
 
+// at least one of both should be given
+export interface Identification {
+  accountId?: string;
+  userId?: string;
+}
+
 export interface TrackEventArguments {
+  identification: Identification;
+  name: string;
+  triggeredAt?: Date;
+}
+
+export interface UpsertAppUserArguments {
   email: string;
-  tag: string;
-  recordedAt?: Date;
+  userId: string;
   properties?: Properties;
 }
 
-export interface TrackPropertiesArguments {
-  email: string;
-  properties: Properties;
+export interface UpsertAppAccountArguments {
+  accountId: string;
+  name: string;
+  properties?: Properties;
+  accountMemberIds?: string[];
 }
 
 export interface GetTrackingSnippetArguments {

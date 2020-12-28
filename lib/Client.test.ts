@@ -240,8 +240,11 @@ describe("Client", () => {
 
       const client = new Client(eventClient, clientConfig);
       const response = await client.trackEvent({
-        email: "test@journy.io",
-        tag: "tag",
+        identification: {
+          userId: "test@journy.io",
+          accountId: "accountId",
+        },
+        name: "tag",
       });
 
       expect(response).toBeDefined();
@@ -258,15 +261,21 @@ describe("Client", () => {
         "POST",
         keySecretHeader,
         JSON.stringify({
-          email: "test@journy.io",
-          tag: "tag",
+          identification: {
+            userId: "test@journy.io",
+            accountId: "accountId",
+          },
+          name: "tag",
         })
       );
 
       const client = new Client(eventClient, clientConfig);
       const response = await client.trackEvent({
-        email: "test@journy.io",
-        tag: "tag",
+        identification: {
+          userId: "test@journy.io",
+          accountId: "accountId",
+        },
+        name: "tag",
       });
 
       expect(response).toBeDefined();
@@ -280,29 +289,21 @@ describe("Client", () => {
         "POST",
         keySecretHeader,
         JSON.stringify({
-          email: "test@journy.io",
-          tag: "tag",
-          recordedAt: "2019-01-01T00:00:00.000Z",
-          properties: {
-            hasDogs: "2",
-            boughtDog: "2020-08-27T12:08:21.000Z",
-            likesDog: "true",
-            firstDogName: "Journy",
+          identification: {
+            userId: "test@journy.io",
           },
+          name: "tag",
+          triggeredAt: "2019-01-01T00:00:00.000Z",
         })
       );
 
       const client = new Client(eventClient, clientConfig);
       const response = await client.trackEvent({
-        email: "test@journy.io",
-        tag: "tag",
-        recordedAt: new Date("2019-01-01T00:00:00.000Z"),
-        properties: {
-          hasDogs: 2,
-          boughtDog: new Date("2020-08-27T12:08:21+00:00"),
-          likesDog: true,
-          firstDogName: "Journy",
+        identification: {
+          userId: "test@journy.io",
         },
+        name: "tag",
+        triggeredAt: new Date("2019-01-01T00:00:00.000Z"),
       });
 
       expect(eventClient.getLastRequest()).toEqual(expectedRequest);
@@ -318,15 +319,15 @@ describe("Client", () => {
         "POST",
         keySecretHeader,
         JSON.stringify({
-          email: "notAnEmail",
-          tag: "tag",
+          identification: {},
+          name: "tag",
         })
       );
 
       const client = new Client(eventClient, clientConfig);
       const response1 = await client.trackEvent({
-        email: "notAnEmail",
-        tag: "tag",
+        identification: {},
+        name: "tag",
       });
 
       expect(eventClient.getLastRequest()).toEqual(expectedRequest);
@@ -345,15 +346,15 @@ describe("Client", () => {
         "POST",
         keySecretHeader,
         JSON.stringify({
-          email: "notAnEmail",
-          tag: "tag",
+          identification: {},
+          name: "tag",
         })
       );
 
       const client = new Client(eventClient, clientConfig);
       const response1 = await client.trackEvent({
-        email: "notAnEmail",
-        tag: "tag",
+        identification: {},
+        name: "tag",
       });
 
       expect(eventClient.getLastRequest()).toEqual(expectedRequest);
@@ -367,13 +368,14 @@ describe("Client", () => {
     });
   });
 
-  describe("trackProperties", () => {
+  describe("upsertAppUser", () => {
     it("correctly handles errors being thrown", async () => {
       const propertiesClient = new HttpClientThatThrows();
 
       const client = new Client(propertiesClient, clientConfig);
-      const response = await client.trackProperties({
+      const response = await client.upsertAppUser({
         email: "test@journy.io",
+        userId: "userId",
         properties: {
           hasDogs: 2,
           boughtDog: new Date("2020-08-27T12:08:21+00:00"),
@@ -397,18 +399,20 @@ describe("Client", () => {
         new HttpHeaders({ "x-api-key": "key-secret" }),
         JSON.stringify({
           email: "test@journy.io",
+          userId: "userId",
           properties: {
-            hasDogs: "2",
-            boughtDog: "2020-08-27T12:08:21.000Z",
-            likesDog: "true",
+            hasDogs: 2,
+            boughtDog: new Date("2020-08-27T12:08:21+00:00"),
+            likesDog: true,
             firstDogName: "Journy",
           },
         })
       );
 
       const client = new Client(propertiesClient, clientConfig);
-      const response = await client.trackProperties({
+      const response = await client.upsertAppUser({
         email: "test@journy.io",
+        userId: "userId",
         properties: {
           hasDogs: 2,
           boughtDog: new Date("2020-08-27T12:08:21+00:00"),
@@ -431,14 +435,114 @@ describe("Client", () => {
         new HttpHeaders({ "x-api-key": "key-secret" }),
         JSON.stringify({
           email: "test@journy.io",
-          properties: {},
+          userId: "",
         })
       );
 
       const client = new Client(propertiesClient, clientConfig);
-      const response1 = await client.trackProperties({
+      const response1 = await client.upsertAppUser({
         email: "test@journy.io",
-        properties: {},
+        userId: "",
+      });
+
+      expect(propertiesClient.getLastRequest()).toEqual(expectedRequest);
+      expect(response1).toBeDefined();
+      expect(response1.success).toBeFalsy();
+      expect(response1.callsRemaining).toEqual(5000);
+      if (!response1.success) {
+        expect(response1.error).toBeDefined();
+        expect(response1.error).toEqual(APIError.BadArgumentsError);
+      }
+    });
+  });
+
+  describe("upsertAppAccount", () => {
+    it("correctly handles errors being thrown", async () => {
+      const propertiesClient = new HttpClientThatThrows();
+
+      const client = new Client(propertiesClient, clientConfig);
+      const response = await client.upsertAppAccount({
+        accountId: "accountId",
+        name: "accountName",
+        properties: {
+          hasDogs: 2,
+          boughtDog: new Date("2020-08-27T12:08:21+00:00"),
+          likesDog: true,
+          firstDogName: "Journy",
+        },
+      });
+
+      expect(response).toBeDefined();
+      expect(response.success).toBeFalsy();
+      expect(response.callsRemaining).toEqual(undefined);
+      if (!response.success) {
+        expect(response.error).toEqual(APIError.UnknownError);
+      }
+    });
+    it("correctly tracks properties", async () => {
+      const propertiesClient = new HttpClientFixed(createdResponse);
+      const expectedRequest = new HttpRequest(
+        new URL("https://api.test.com/journeys/properties"),
+        "POST",
+        new HttpHeaders({ "x-api-key": "key-secret" }),
+        JSON.stringify({
+          accountId: "accountId",
+          name: "accountName",
+          properties: {
+            hasDogs: 2,
+            boughtDog: new Date("2020-08-27T12:08:21+00:00"),
+            likesDog: true,
+            firstDogName: "Journy",
+          },
+        })
+      );
+
+      const client = new Client(propertiesClient, clientConfig);
+      const response = await client.upsertAppAccount({
+        accountId: "accountId",
+        name: "accountName",
+        properties: {
+          hasDogs: 2,
+          boughtDog: new Date("2020-08-27T12:08:21+00:00"),
+          likesDog: true,
+          firstDogName: "Journy",
+        },
+      });
+
+      expect(propertiesClient.getLastRequest()).toEqual(expectedRequest);
+      expect(response).toBeDefined();
+      expect(response.success).toBeTruthy();
+      expect(response.callsRemaining).toEqual(5000);
+    });
+
+    it("correctly shows when the input parameters are invalid", async () => {
+      const propertiesClient = new HttpClientFixed(badRequestResponse);
+      const expectedRequest = new HttpRequest(
+        new URL("https://api.test.com/journeys/properties"),
+        "POST",
+        new HttpHeaders({ "x-api-key": "key-secret" }),
+        JSON.stringify({
+          accountId: "accountId",
+          name: "",
+          properties: {
+            hasDogs: 2,
+            boughtDog: new Date("2020-08-27T12:08:21+00:00"),
+            likesDog: true,
+            firstDogName: "Journy",
+          },
+        })
+      );
+
+      const client = new Client(propertiesClient, clientConfig);
+      const response1 = await client.upsertAppAccount({
+        accountId: "accountId",
+        name: "",
+        properties: {
+          hasDogs: 2,
+          boughtDog: new Date("2020-08-27T12:08:21+00:00"),
+          likesDog: true,
+          firstDogName: "Journy",
+        },
       });
 
       expect(propertiesClient.getLastRequest()).toEqual(expectedRequest);
