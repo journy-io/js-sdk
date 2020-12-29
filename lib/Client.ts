@@ -1,23 +1,16 @@
 import {
   HttpClient,
-  HttpClientAxios,
+  HttpClientNode,
   HttpHeaders,
   HttpRequest,
   HttpResponse,
 } from "@journyio/http";
-import axios from "axios";
+import { URL } from "url";
+import { AppEvent } from "./AppEvent";
 
 export interface Config {
   apiKey: string;
-  apiUrl?: string;
-}
-
-export function createClient(config: Config): Client {
-  const instance = axios.create({ timeout: 5000 });
-  delete instance.defaults.headers.common;
-  const httpClient = new HttpClientAxios(instance);
-
-  return new Client(httpClient, config);
+  rootUrl?: string;
 }
 
 export class Client {
@@ -26,7 +19,13 @@ export class Client {
     private readonly config: Config
   ) {
     this.assertNotRunningInBrowser();
-    this.assertConfigIsValid(config);
+    this.assertConfigIsValid(this.config);
+  }
+
+  static withDefaults(apiKey: string) {
+    return new Client(new HttpClientNode(5000), {
+      apiKey: apiKey,
+    });
   }
 
   // noinspection JSMethodCanBeStatic
@@ -42,38 +41,50 @@ export class Client {
   }
 
   private createURL(path: string) {
-    const url = this.config.apiUrl || "https://api.journy.io";
+    const url = this.config.rootUrl
+      ? this.config.rootUrl
+      : "https://api.journy.io";
 
     return new URL(url + path);
   }
 
+  private static parseCallsRemaining(
+    httpResponse: HttpResponse
+  ): string | undefined {
+    const remaining = httpResponse.getHeaders().byName("X-RateLimit-Remaining");
+    if (Array.isArray(remaining)) return undefined;
+    else return remaining;
+  }
+
   // noinspection JSMethodCanBeStatic
-  private buildError(response: HttpResponse): Error {
-    const remaining = response.getHeaders().byName("X-RateLimit-Remaining");
+  private handleError(httpResponse?: HttpResponse): Error {
+    if (httpResponse instanceof HttpResponse) {
+      const remaining = Client.parseCallsRemaining(httpResponse);
 
-    let body: { meta: { requestId: string } } | undefined = undefined;
-    try {
-      body = JSON.parse(response.getBody());
-    } catch (error) {
-      // ignore
+      return {
+        success: false,
+        requestId: JSON.parse(httpResponse.getBody()).meta.requestId,
+        callsRemaining:
+          remaining !== undefined ? parseInt(remaining) : undefined,
+        error: statusCodeToError(httpResponse.getStatusCode()),
+      };
     }
-
     return {
       success: false,
-      requestId: body?.meta.requestId,
-      callsRemaining: remaining ? parseInt(remaining) : undefined,
-      error: statusCodeToError(response.getStatusCode()),
+      requestId: undefined,
+      error: APIError.UnknownError,
+      callsRemaining: undefined,
     };
   }
 
   // noinspection JSMethodCanBeStatic
   private assertConfigIsValid(clientConfig: Config) {
-    if (clientConfig.apiUrl) {
+    if (clientConfig.rootUrl) {
       try {
-        new URL(clientConfig.apiUrl);
+        new URL(clientConfig.rootUrl);
       } catch (error) {
         throw new Error(
-          `The API url is not a valid URL: ${clientConfig.apiUrl}`
+          `The API url is not a valid URL: ${clientConfig.rootUrl}`
         );
       }
     }
@@ -92,139 +103,207 @@ export class Client {
     const newProperties: Properties = {};
     for (const key of Object.keys(properties)) {
       const value = properties[key];
+
+      if (
+        typeof value === "string" ||
+        typeof value === "boolean" ||
+        typeof value === "number"
+      ) {
+        newProperties[key] = String(value);
+      }
+
       if (value instanceof Date) {
         newProperties[key] = value.toISOString();
-      } else {
-        newProperties[key] = value.toString();
       }
     }
+
     return newProperties;
   }
 
-  async trackEvent(args: TrackEventArguments): Promise<Result<undefined>> {
+  async addEvent(event: AppEvent): Promise<Result<undefined>> {
+    const date = event.getDate();
     const request = new HttpRequest(
-      this.createURL(`/journeys/events`),
+      this.createURL("/events"),
       "POST",
-      new HttpHeaders({
-        ...this.getHeaders().toObject(),
-        "content-type": "application/json",
-      }),
+      this.getHeaders(),
       JSON.stringify({
-        email: args.email,
-        tag: args.tag,
-        recordedAt: args.recordedAt ? args.recordedAt.toISOString() : undefined,
-        properties: args.properties
-          ? this.stringifyProperties(args.properties)
-          : undefined,
+        identification: {
+          userId: event.getUserId(),
+          accountId: event.getAccountId(),
+        },
+        name: event.getName(),
+        triggeredAt: date ? date.toISOString() : undefined,
       })
     );
 
-    const response = await this.httpClient.send(request);
+    try {
+      const response = await this.httpClient.send(request);
 
-    if (response.getStatusCode() !== 201) {
-      return this.buildError(response);
+      if (response.getStatusCode() < 200 || response.getStatusCode() >= 300) {
+        return this.handleError(response);
+      }
+
+      const remaining = Client.parseCallsRemaining(response);
+
+      return {
+        success: true,
+        requestId: JSON.parse(response.getBody()).meta.requestId,
+        callsRemaining: remaining !== undefined ? parseInt(remaining, 10) : 0,
+        data: undefined,
+      };
+    } catch (error) {
+      return this.handleError(error);
     }
-
-    const remaining = response.getHeaders().byName("X-RateLimit-Remaining");
-    const body: { meta: { requestId: string } } = JSON.parse(
-      response.getBody()
-    );
-
-    return {
-      success: true,
-      requestId: body.meta.requestId,
-      callsRemaining: remaining ? parseInt(remaining, 10) : 0,
-      data: undefined,
-    };
   }
 
-  async updateProperties(
-    args: UpdatePropertiesArguments
+  async upsertAppUser(
+    args: UpsertAppUserArguments
   ): Promise<Result<undefined>> {
     const request = new HttpRequest(
-      this.createURL(`/journeys/properties`),
+      this.createURL("/users/upsert"),
       "POST",
-      new HttpHeaders({
-        ...this.getHeaders().toObject(),
-        "content-type": "application/json",
-      }),
+      this.getHeaders(),
       JSON.stringify({
         email: args.email,
+        userId: args.userId,
         properties: args.properties
           ? this.stringifyProperties(args.properties)
           : undefined,
       })
     );
 
-    const response = await this.httpClient.send(request);
+    try {
+      const response = await this.httpClient.send(request);
 
-    if (response.getStatusCode() !== 201) {
-      return this.buildError(response);
+      if (response.getStatusCode() < 200 || response.getStatusCode() >= 300) {
+        return this.handleError(response);
+      }
+
+      const remaining = Client.parseCallsRemaining(response);
+
+      return {
+        success: true,
+        requestId: JSON.parse(response.getBody()).meta.requestId,
+        callsRemaining: remaining !== undefined ? parseInt(remaining, 10) : 0,
+        data: undefined,
+      };
+    } catch (error) {
+      return this.handleError(error);
+    }
+  }
+
+  async upsertAppAccount(
+    args: UpsertAppAccountArguments
+  ): Promise<Result<undefined>> {
+    if (!args.accountId) {
+      throw new Error("Account ID cannot be empty!");
     }
 
-    const remaining = response.getHeaders().byName("X-RateLimit-Remaining");
+    if (!args.name) {
+      throw new Error("Account name cannot be empty!");
+    }
 
-    return {
-      success: true,
-      requestId: JSON.parse(response.getBody()).meta.requestId,
-      callsRemaining: remaining ? parseInt(remaining, 10) : 0,
-      data: undefined,
-    };
+    const request = new HttpRequest(
+      this.createURL("/accounts/upsert"),
+      "POST",
+      this.getHeaders(),
+      JSON.stringify({
+        accountId: args.accountId,
+        name: args.name,
+        properties: args.properties
+          ? this.stringifyProperties(args.properties)
+          : undefined,
+        members: args.memberIds
+          ? args.memberIds.map((id) => String(id))
+          : undefined,
+      })
+    );
+
+    try {
+      const response = await this.httpClient.send(request);
+
+      if (response.getStatusCode() < 200 || response.getStatusCode() >= 300) {
+        return this.handleError(response);
+      }
+
+      const remaining = Client.parseCallsRemaining(response);
+
+      return {
+        success: true,
+        requestId: JSON.parse(response.getBody()).meta.requestId,
+        callsRemaining: remaining !== undefined ? parseInt(remaining, 10) : 0,
+        data: undefined,
+      };
+    } catch (error) {
+      return this.handleError(error);
+    }
   }
 
   async getTrackingSnippet(
     args: GetTrackingSnippetArguments
   ): Promise<Result<TrackingSnippetResponse>> {
     const { domain } = args;
+
+    if (!domain) {
+      throw new Error("Domain cannot be empty!");
+    }
+
     const request = new HttpRequest(
       this.createURL(`/tracking/snippet?domain=${encodeURIComponent(domain)}`),
       "GET",
       this.getHeaders()
     );
 
-    const response = await this.httpClient.send(request);
+    try {
+      const response = await this.httpClient.send(request);
 
-    if (response.getStatusCode() !== 200) {
-      return this.buildError(response);
+      if (response.getStatusCode() < 200 || response.getStatusCode() >= 300) {
+        return this.handleError(response);
+      }
+
+      const parsed = JSON.parse(response.getBody()).data;
+      const remaining = Client.parseCallsRemaining(response);
+      const snippet = parsed.snippet;
+
+      return {
+        success: true,
+        requestId: JSON.parse(response.getBody()).meta.requestId,
+        callsRemaining: remaining !== undefined ? parseInt(remaining, 10) : 0,
+        data: {
+          domain: domain,
+          snippet: snippet,
+        },
+      };
+    } catch (error) {
+      return this.handleError(error);
     }
-
-    const parsed = JSON.parse(response.getBody()).data;
-    const remaining = response.getHeaders().byName("X-RateLimit-Remaining");
-    const snippet = parsed.snippet;
-
-    return {
-      success: true,
-      requestId: JSON.parse(response.getBody()).meta.requestId,
-      callsRemaining: remaining ? parseInt(remaining, 10) : 0,
-      data: {
-        domain: domain,
-        snippet: snippet,
-      },
-    };
   }
 
   async getApiKeyDetails(): Promise<Result<ApiKeyDetails>> {
     const request = new HttpRequest(
-      this.createURL(`/validate`),
+      this.createURL("/validate"),
       "GET",
       this.getHeaders()
     );
 
-    const response = await this.httpClient.send(request);
+    try {
+      const response = await this.httpClient.send(request);
+      const details: ApiKeyDetails = JSON.parse(response.getBody()).data;
+      const remaining = Client.parseCallsRemaining(response);
 
-    if (response.getStatusCode() !== 200) {
-      return this.buildError(response);
+      if (response.getStatusCode() < 200 || response.getStatusCode() >= 300) {
+        return this.handleError(response);
+      }
+
+      return {
+        success: true,
+        requestId: JSON.parse(response.getBody()).meta.requestId,
+        callsRemaining: remaining !== undefined ? parseInt(remaining, 10) : 0,
+        data: details,
+      };
+    } catch (error) {
+      return this.handleError(error);
     }
-
-    const details: ApiKeyDetails = JSON.parse(response.getBody()).data;
-    const remaining = response.getHeaders().byName("X-RateLimit-Remaining");
-
-    return {
-      success: true,
-      requestId: JSON.parse(response.getBody()).meta.requestId,
-      callsRemaining: remaining ? parseInt(remaining, 10) : 0,
-      data: details,
-    };
   }
 }
 
@@ -276,16 +355,17 @@ export interface ApiKeyDetails {
   permissions: string[];
 }
 
-export interface TrackEventArguments {
+export interface UpsertAppUserArguments {
   email: string;
-  tag: string;
-  recordedAt?: Date;
+  userId: string;
   properties?: Properties;
 }
 
-export interface UpdatePropertiesArguments {
-  email: string;
-  properties: Properties;
+export interface UpsertAppAccountArguments {
+  accountId: string;
+  name: string;
+  properties?: Properties;
+  memberIds?: string[];
 }
 
 export interface GetTrackingSnippetArguments {
