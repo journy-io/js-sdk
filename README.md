@@ -25,7 +25,7 @@ yarn add @journyio/sdk
 To start, first import the client.
 
 ```ts
-import { Client, createClient } from "@journyio/sdk";
+import { Client } from "@journyio/sdk";
 ```
 
 ### Configuration
@@ -34,19 +34,17 @@ To be able to use the journy.io SDK you need to generate an API key. If you don'
 
 If you don't have an account yet, you can create one in [journy.io](https://app.journy.io/register?utm_source=github&utm_content=readme-js-sdk) or [request a demo first](https://www.journy.io/book-demo?utm_source=github&utm_content=readme-js-sdk).
 
-Go to your settings, under the *sources*-tab, to create and edit API keys. Make sure to give the correct permissions to the API Key and set the correct property group name.
+Go to your settings, under the *Connections*-tab, to create and edit API keys. Make sure to give the correct permissions to the API Key.
 
 ```ts
-const client = createClient({
-  apiKey: "api-key",
-});
+const client = Client.withDefaults("your-api-key");
 ```
 
-If you want to use a custom [HttpClient](https://github.com/journy-io/http/blob/main/lib/HttpClient.ts):
+If you want to use a custom [HttpClient](https://github.com/journy-io/http):
 
 ```ts
-const httpClient = new OwnHttpClientImplementation();
-const client = new Client(httpClient, config);
+const http = new OwnHttpClientImplementation();
+const client = new Client(http, { apiKey: "your-api-key" });
 ```
 
 ### Methods
@@ -57,7 +55,6 @@ const client = new Client(httpClient, config);
 const result = await client.getApiKeyDetails();
 
 if (result.success) {
-  console.log(result.data.propertyGroupName); // string
   console.log(result.data.permissions); // string[]
   console.log(result.data.callsRemaining); // number
 }
