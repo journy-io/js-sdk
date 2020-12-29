@@ -1,4 +1,5 @@
-import { Client, createClient, APIError, Config } from "./Client";
+import { AppEvent } from "./AppEvent";
+import { Client, APIError, Config } from "./Client";
 import {
   HttpHeaders,
   HttpRequest,
@@ -17,26 +18,19 @@ class HttpClientThatThrows implements HttpClient {
 describe("createClient", () => {
   it("fails when the config is invalid", async () => {
     expect(() => {
-      createClient({ apiKey: "" });
+      Client.withDefaults("");
     }).toThrowError("The API key cannot be empty.");
 
     expect(() => {
-      createClient({ apiKey: "api-key", apiUrl: "invalid-url" });
+      new Client(new HttpClientThatThrows(), {
+        apiKey: "api-key",
+        rootUrl: "invalid-url",
+      });
     }).toThrowError("The API url is not a valid URL: invalid-url");
   });
 
   it("creates a client with API url", () => {
-    const client = createClient({
-      apiKey: "key-secret",
-      apiUrl: "https://api.test.com",
-    });
-    expect(client).toBeDefined();
-  });
-
-  it("creates a client", () => {
-    const client = createClient({
-      apiKey: "key-secret",
-    });
+    const client = Client.withDefaults("api-key");
     expect(client).toBeDefined();
   });
 });
@@ -44,11 +38,11 @@ describe("createClient", () => {
 describe("Client", () => {
   const clientConfig: Config = {
     apiKey: "key-secret",
-    apiUrl: "https://api.test.com",
+    rootUrl: "https://api.test.com",
   };
   const nonExistingClientConfig: Config = {
     apiKey: "non-existing-key-secret",
-    apiUrl: "https://api.test.com",
+    rootUrl: "https://api.test.com",
   };
   const keySecretHeader = new HttpHeaders({ "x-api-key": "key-secret" });
   const nonExistingKeySecretHeader = new HttpHeaders({
@@ -232,18 +226,14 @@ describe("Client", () => {
     });
   });
 
-  describe("trackEvent", () => {
+  describe("addEvent", () => {
     it("correctly handles errors being thrown", async () => {
       const eventClient = new HttpClientThatThrows();
 
       const client = new Client(eventClient, clientConfig);
-      const response = await client.trackEvent({
-        identification: {
-          userId: "test@journy.io",
-          accountId: "accountId",
-        },
-        name: "tag",
-      });
+      const response = await client.addEvent(
+        AppEvent.forUserInAccount("tag", "test@journy.io", "accountId")
+      );
 
       expect(response).toBeDefined();
       expect(response.success).toBeFalsy();
@@ -252,10 +242,11 @@ describe("Client", () => {
         expect(response.error).toEqual(APIError.UnknownError);
       }
     });
+
     it("correctly tracks an event", async () => {
       const eventClient = new HttpClientFixed(createdResponse);
       const expectedRequest = new HttpRequest(
-        new URL("https://api.test.com/journeys/events"),
+        new URL("https://api.test.com/events"),
         "POST",
         keySecretHeader,
         JSON.stringify({
@@ -268,22 +259,20 @@ describe("Client", () => {
       );
 
       const client = new Client(eventClient, clientConfig);
-      const response = await client.trackEvent({
-        identification: {
-          userId: "test@journy.io",
-          accountId: "accountId",
-        },
-        name: "tag",
-      });
+      const response = await client.addEvent(
+        AppEvent.forUserInAccount("tag", "test@journy.io", "accountId")
+      );
 
+      expect(eventClient.getLastRequest()).toEqual(expectedRequest);
       expect(response).toBeDefined();
       expect(response.success).toBeTruthy();
       expect(response.callsRemaining).toEqual(5000);
     });
+
     it("correctly handles dates", async () => {
       const eventClient = new HttpClientFixed(createdResponse);
       const expectedRequest = new HttpRequest(
-        new URL("https://api.test.com/journeys/events"),
+        new URL("https://api.test.com/events"),
         "POST",
         keySecretHeader,
         JSON.stringify({
@@ -296,13 +285,11 @@ describe("Client", () => {
       );
 
       const client = new Client(eventClient, clientConfig);
-      const response = await client.trackEvent({
-        identification: {
-          userId: "test@journy.io",
-        },
-        name: "tag",
-        triggeredAt: new Date("2019-01-01T00:00:00.000Z"),
-      });
+      const response = await client.addEvent(
+        AppEvent.forUser("tag", "test@journy.io").happenedAt(
+          new Date("2019-01-01T00:00:00.000Z")
+        )
+      );
 
       expect(eventClient.getLastRequest()).toEqual(expectedRequest);
       expect(response).toBeDefined();
@@ -313,20 +300,21 @@ describe("Client", () => {
     it("correctly states when the input is invalid", async () => {
       const eventClient = new HttpClientFixed(badRequestResponse);
       const expectedRequest = new HttpRequest(
-        new URL("https://api.test.com/journeys/events"),
+        new URL("https://api.test.com/events"),
         "POST",
         keySecretHeader,
         JSON.stringify({
-          identification: {},
+          identification: {
+            userId: "test@journy.io",
+          },
           name: "tag",
         })
       );
 
       const client = new Client(eventClient, clientConfig);
-      const response1 = await client.trackEvent({
-        identification: {},
-        name: "tag",
-      });
+      const response1 = await client.addEvent(
+        AppEvent.forUser("tag", "test@journy.io")
+      );
 
       expect(eventClient.getLastRequest()).toEqual(expectedRequest);
       expect(response1).toBeDefined();
@@ -337,23 +325,25 @@ describe("Client", () => {
         expect(response1.error).toEqual(APIError.BadArgumentsError);
       }
     });
+
     it("correctly states when the user is unauthorized", async () => {
       const eventClient = new HttpClientFixed(unAuthorizedResponse);
       const expectedRequest = new HttpRequest(
-        new URL("https://api.test.com/journeys/events"),
+        new URL("https://api.test.com/events"),
         "POST",
         keySecretHeader,
         JSON.stringify({
-          identification: {},
+          identification: {
+            userId: "userId",
+          },
           name: "tag",
         })
       );
 
       const client = new Client(eventClient, clientConfig);
-      const response1 = await client.trackEvent({
-        identification: {},
-        name: "tag",
-      });
+      const response1 = await client.addEvent(
+        AppEvent.forUser("tag", "userId")
+      );
 
       expect(eventClient.getLastRequest()).toEqual(expectedRequest);
       expect(response1).toBeDefined();
@@ -366,7 +356,7 @@ describe("Client", () => {
     });
   });
 
-  describe("upsertAppUser", () => {
+  describe("upsertUser", () => {
     it("correctly handles errors being thrown", async () => {
       const propertiesClient = new HttpClientThatThrows();
 
@@ -389,19 +379,20 @@ describe("Client", () => {
         expect(response.error).toEqual(APIError.UnknownError);
       }
     });
+
     it("correctly tracks properties", async () => {
       const propertiesClient = new HttpClientFixed(createdResponse);
       const expectedRequest = new HttpRequest(
-        new URL("https://api.test.com/journeys/properties"),
+        new URL("https://api.test.com/users/upsert"),
         "POST",
         new HttpHeaders({ "x-api-key": "key-secret" }),
         JSON.stringify({
           email: "test@journy.io",
           userId: "userId",
           properties: {
-            hasDogs: 2,
-            boughtDog: new Date("2020-08-27T12:08:21+00:00"),
-            likesDog: true,
+            hasDogs: "2",
+            boughtDog: "2020-08-27T12:08:21.000Z",
+            likesDog: "true",
             firstDogName: "Journy",
           },
         })
@@ -428,7 +419,7 @@ describe("Client", () => {
     it("correctly shows when the input parameters are invalid", async () => {
       const propertiesClient = new HttpClientFixed(badRequestResponse);
       const expectedRequest = new HttpRequest(
-        new URL("https://api.test.com/journeys/properties"),
+        new URL("https://api.test.com/users/upsert"),
         "POST",
         new HttpHeaders({ "x-api-key": "key-secret" }),
         JSON.stringify({
@@ -454,7 +445,7 @@ describe("Client", () => {
     });
   });
 
-  describe("upsertAppAccount", () => {
+  describe("upsertAccount", () => {
     it("correctly handles errors being thrown", async () => {
       const propertiesClient = new HttpClientThatThrows();
 
@@ -477,19 +468,20 @@ describe("Client", () => {
         expect(response.error).toEqual(APIError.UnknownError);
       }
     });
+
     it("correctly tracks properties", async () => {
       const propertiesClient = new HttpClientFixed(createdResponse);
       const expectedRequest = new HttpRequest(
-        new URL("https://api.test.com/journeys/properties"),
+        new URL("https://api.test.com/accounts/upsert"),
         "POST",
         new HttpHeaders({ "x-api-key": "key-secret" }),
         JSON.stringify({
           accountId: "accountId",
           name: "accountName",
           properties: {
-            hasDogs: 2,
-            boughtDog: new Date("2020-08-27T12:08:21+00:00"),
-            likesDog: true,
+            hasDogs: "2",
+            boughtDog: "2020-08-27T12:08:21.000Z",
+            likesDog: "true",
             firstDogName: "Journy",
           },
         })
@@ -500,9 +492,9 @@ describe("Client", () => {
         accountId: "accountId",
         name: "accountName",
         properties: {
-          hasDogs: 2,
+          hasDogs: "2",
           boughtDog: new Date("2020-08-27T12:08:21+00:00"),
-          likesDog: true,
+          likesDog: "true",
           firstDogName: "Journy",
         },
       });
@@ -516,16 +508,16 @@ describe("Client", () => {
     it("correctly shows when the input parameters are invalid", async () => {
       const propertiesClient = new HttpClientFixed(badRequestResponse);
       const expectedRequest = new HttpRequest(
-        new URL("https://api.test.com/journeys/properties"),
+        new URL("https://api.test.com/accounts/upsert"),
         "POST",
         new HttpHeaders({ "x-api-key": "key-secret" }),
         JSON.stringify({
           accountId: "accountId",
-          name: "",
+          name: "journy.io",
           properties: {
-            hasDogs: 2,
-            boughtDog: new Date("2020-08-27T12:08:21+00:00"),
-            likesDog: true,
+            hasDogs: "2",
+            boughtDog: "2020-08-27T12:08:21.000Z",
+            likesDog: "true",
             firstDogName: "Journy",
           },
         })
@@ -534,7 +526,7 @@ describe("Client", () => {
       const client = new Client(propertiesClient, clientConfig);
       const response1 = await client.upsertAppAccount({
         accountId: "accountId",
-        name: "",
+        name: "journy.io",
         properties: {
           hasDogs: 2,
           boughtDog: new Date("2020-08-27T12:08:21+00:00"),
@@ -570,6 +562,7 @@ describe("Client", () => {
         expect(response.error).toEqual(APIError.UnknownError);
       }
     });
+
     it("correctly returns an existing snippet", async () => {
       const trackingsnippetClient = new HttpClientFixed(
         new HttpResponse(
@@ -606,6 +599,7 @@ describe("Client", () => {
         expect(response.data.snippet).toBeDefined();
       }
     });
+
     it("correctly notifies a domain not being found", async () => {
       const trackingsnippetClient = new HttpClientFixed(notFoundResponse);
       const expectedRequest = new HttpRequest(

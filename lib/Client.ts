@@ -6,17 +6,11 @@ import {
   HttpResponse,
 } from "@journyio/http";
 import { URL } from "url";
+import { AppEvent } from "./AppEvent";
 
 export interface Config {
   apiKey: string;
-  apiUrl?: string;
-  requestTimeout?: number;
-}
-
-export function createClient(config: Config): Client {
-  const httpClient = new HttpClientNode(config.requestTimeout || 5000);
-
-  return new Client(httpClient, config);
+  rootUrl?: string;
 }
 
 export class Client {
@@ -25,7 +19,13 @@ export class Client {
     private readonly config: Config
   ) {
     this.assertNotRunningInBrowser();
-    this.assertConfigIsValid(config);
+    this.assertConfigIsValid(this.config);
+  }
+
+  static withDefaults(apiKey: string) {
+    return new Client(new HttpClientNode(5000), {
+      apiKey: apiKey,
+    });
   }
 
   // noinspection JSMethodCanBeStatic
@@ -41,7 +41,9 @@ export class Client {
   }
 
   private createURL(path: string) {
-    const url = this.config.apiUrl || "https://api.journy.io";
+    const url = this.config.rootUrl
+      ? this.config.rootUrl
+      : "https://api.journy.io";
 
     return new URL(url + path);
   }
@@ -77,12 +79,12 @@ export class Client {
 
   // noinspection JSMethodCanBeStatic
   private assertConfigIsValid(clientConfig: Config) {
-    if (clientConfig.apiUrl) {
+    if (clientConfig.rootUrl) {
       try {
-        new URL(clientConfig.apiUrl);
+        new URL(clientConfig.rootUrl);
       } catch (error) {
         throw new Error(
-          `The API url is not a valid URL: ${clientConfig.apiUrl}`
+          `The API url is not a valid URL: ${clientConfig.rootUrl}`
         );
       }
     }
@@ -101,26 +103,36 @@ export class Client {
     const newProperties: Properties = {};
     for (const key of Object.keys(properties)) {
       const value = properties[key];
+
+      if (
+        typeof value === "string" ||
+        typeof value === "boolean" ||
+        typeof value === "number"
+      ) {
+        newProperties[key] = String(value);
+      }
+
       if (value instanceof Date) {
         newProperties[key] = value.toISOString();
-      } else {
-        newProperties[key] = value; // Boolean, number and string allowed
       }
     }
+
     return newProperties;
   }
 
-  async trackEvent(args: TrackEventArguments): Promise<Result<undefined>> {
+  async addEvent(event: AppEvent): Promise<Result<undefined>> {
+    const date = event.getDate();
     const request = new HttpRequest(
-      this.createURL(`/journeys/events`),
+      this.createURL("/events"),
       "POST",
       this.getHeaders(),
       JSON.stringify({
-        identification: args.identification,
-        name: args.name,
-        triggeredAt: args.triggeredAt
-          ? args.triggeredAt.toISOString()
-          : undefined,
+        identification: {
+          userId: event.getUserId(),
+          accountId: event.getAccountId(),
+        },
+        name: event.getName(),
+        triggeredAt: date ? date.toISOString() : undefined,
       })
     );
 
@@ -148,7 +160,7 @@ export class Client {
     args: UpsertAppUserArguments
   ): Promise<Result<undefined>> {
     const request = new HttpRequest(
-      this.createURL(`/journeys/properties`),
+      this.createURL("/users/upsert"),
       "POST",
       this.getHeaders(),
       JSON.stringify({
@@ -183,8 +195,16 @@ export class Client {
   async upsertAppAccount(
     args: UpsertAppAccountArguments
   ): Promise<Result<undefined>> {
+    if (!args.accountId) {
+      throw new Error("Account ID cannot be empty!");
+    }
+
+    if (!args.name) {
+      throw new Error("Account name cannot be empty!");
+    }
+
     const request = new HttpRequest(
-      this.createURL(`/journeys/properties`),
+      this.createURL("/accounts/upsert"),
       "POST",
       this.getHeaders(),
       JSON.stringify({
@@ -193,8 +213,8 @@ export class Client {
         properties: args.properties
           ? this.stringifyProperties(args.properties)
           : undefined,
-        accountMemberIds: args.accountMemberIds
-          ? args.accountMemberIds
+        members: args.memberIds
+          ? args.memberIds.map((id) => String(id))
           : undefined,
       })
     );
@@ -223,6 +243,11 @@ export class Client {
     args: GetTrackingSnippetArguments
   ): Promise<Result<TrackingSnippetResponse>> {
     const { domain } = args;
+
+    if (!domain) {
+      throw new Error("Domain cannot be empty!");
+    }
+
     const request = new HttpRequest(
       this.createURL(`/tracking/snippet?domain=${encodeURIComponent(domain)}`),
       "GET",
@@ -256,7 +281,7 @@ export class Client {
 
   async getApiKeyDetails(): Promise<Result<ApiKeyDetails>> {
     const request = new HttpRequest(
-      this.createURL(`/validate`),
+      this.createURL("/validate"),
       "GET",
       this.getHeaders()
     );
@@ -330,18 +355,6 @@ export interface ApiKeyDetails {
   permissions: string[];
 }
 
-// at least one of both should be given
-export interface Identification {
-  accountId?: string;
-  userId?: string;
-}
-
-export interface TrackEventArguments {
-  identification: Identification;
-  name: string;
-  triggeredAt?: Date;
-}
-
 export interface UpsertAppUserArguments {
   email: string;
   userId: string;
@@ -352,7 +365,7 @@ export interface UpsertAppAccountArguments {
   accountId: string;
   name: string;
   properties?: Properties;
-  accountMemberIds?: string[];
+  memberIds?: string[];
 }
 
 export interface GetTrackingSnippetArguments {

@@ -63,39 +63,54 @@ if (result.success) {
 }
 ```
 
-#### Track event for a user
+#### Create or update user
+
+_Note: when sending an empty value (`""`) as value for a property, the property will be deleted._
 
 ```ts
-await client.trackEvent({
-  // required
+await client.upsertAppUser({
+  userId: "userId",
   email: "name@domain.tld",
-  tag: "login",
-
-  // optional
-  recordedAt: new Date(),
   properties: {
     age: 26,
     name: "John Doe",
     is_developer: true,
+    registered_at: new Date(...),
     this_property_will_be_deleted: "",
   },
 });
 ```
 
-#### Set, update or delete properties for a user
+#### Create or update account
 
 _Note: when sending an empty value (`""`) as value for a property, the property will be deleted._
 
 ```ts
-await client.trackProperties({
-  email: "name@domain.tld",
+await client.upsertAppAccount({
+  accountId: "accountId",
+  name: "journy.io",
   properties: {
     age: 26,
     name: "John Doe",
     is_developer: true,
+    registered_at: new Date(...),
     this_property_will_be_deleted: "",
   },
+  members: ["userId", "userId"]
 });
+```
+
+#### Add event
+
+```ts
+import { AppEvent } from "./Client";
+
+event = AppEvent.forUser("login", "userId");
+event = AppEvent.forUser("some_historic_event", "userId").happenedAt(new Date(...));
+event = AppEvent.forAccount("reached_monthly_volume", "accountId");
+event = AppEvent.forUserInAccount("updated_settings", "userId", "accountId");
+
+await client.addEvent(event);
 ```
 
 #### Get tracking snippet for a domain
