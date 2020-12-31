@@ -546,6 +546,77 @@ describe("Client", () => {
     });
   });
 
+  describe("link", () => {
+    it("correctly handles errors being thrown", async () => {
+      const propertiesClient = new HttpClientThatThrows();
+
+      const client = new Client(propertiesClient, clientConfig);
+      const response = await client.link({
+        deviceId: "deviceId",
+        userId: "userId",
+      });
+
+      expect(response).toBeDefined();
+      expect(response.success).toBeFalsy();
+      expect(response.callsRemaining).toEqual(undefined);
+      if (!response.success) {
+        expect(response.error).toEqual(APIError.UnknownError);
+      }
+    });
+
+    it("correctly links users and devideIds", async () => {
+      const propertiesClient = new HttpClientFixed(createdResponse);
+      const expectedRequest = new HttpRequest(
+        new URL("https://api.test.com/link"),
+        "POST",
+        new HttpHeaders({ "x-api-key": "key-secret" }),
+        JSON.stringify({
+          deviceId: "deviceId",
+          userId: "userId",
+        })
+      );
+
+      const client = new Client(propertiesClient, clientConfig);
+      const response = await client.link({
+        deviceId: "deviceId",
+        userId: "userId",
+      });
+
+      expect(propertiesClient.getLastRequest()).toEqual(expectedRequest);
+      expect(response).toBeDefined();
+      expect(response.success).toBeTruthy();
+      expect(response.callsRemaining).toEqual(5000);
+    });
+
+    it("correctly shows when the input parameters are invalid", async () => {
+      const propertiesClient = new HttpClientFixed(badRequestResponse);
+      const expectedRequest = new HttpRequest(
+        new URL("https://api.test.com/link"),
+        "POST",
+        new HttpHeaders({ "x-api-key": "key-secret" }),
+        JSON.stringify({
+          deviceId: "",
+          userId: "userId",
+        })
+      );
+
+      const client = new Client(propertiesClient, clientConfig);
+      const response = await client.link({
+        deviceId: "",
+        userId: "userId",
+      });
+
+      expect(propertiesClient.getLastRequest()).toEqual(expectedRequest);
+      expect(response).toBeDefined();
+      expect(response.success).toBeFalsy();
+      expect(response.callsRemaining).toEqual(5000);
+      if (!response.success) {
+        expect(response.error).toBeDefined();
+        expect(response.error).toEqual(APIError.BadArgumentsError);
+      }
+    });
+  });
+
   describe("getTrackingSnippet", () => {
     it("correctly handles errors being thrown", async () => {
       const trackingsnippetClient = new HttpClientThatThrows();

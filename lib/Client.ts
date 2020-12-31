@@ -239,6 +239,37 @@ export class Client {
     }
   }
 
+  async link(args: LinkArguments): Promise<Result<undefined>> {
+    const request = new HttpRequest(
+      this.createURL(`/link`),
+      "POST",
+      this.getHeaders(),
+      JSON.stringify({
+        deviceId: args.deviceId,
+        userId: args.userId,
+      })
+    );
+
+    try {
+      const response = await this.httpClient.send(request);
+
+      if (response.getStatusCode() < 200 || response.getStatusCode() >= 300) {
+        return this.handleError(response);
+      }
+
+      const remaining = Client.parseCallsRemaining(response);
+
+      return {
+        success: true,
+        requestId: JSON.parse(response.getBody()).meta.requestId,
+        callsRemaining: remaining !== undefined ? parseInt(remaining, 10) : 0,
+        data: undefined,
+      };
+    } catch (error) {
+      return this.handleError(error);
+    }
+  }
+
   async getTrackingSnippet(
     args: GetTrackingSnippetArguments
   ): Promise<Result<TrackingSnippetResponse>> {
@@ -366,6 +397,11 @@ export interface UpsertAppAccountArguments {
   name: string;
   properties?: Properties;
   memberIds?: string[];
+}
+
+export interface LinkArguments {
+  deviceId: string;
+  userId: string;
 }
 
 export interface GetTrackingSnippetArguments {
