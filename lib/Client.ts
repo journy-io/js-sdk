@@ -127,7 +127,7 @@ export class Client {
       "POST",
       new HttpHeaders({
         ...this.getHeaders().toObject(),
-        "content-type": "application/json",
+        "Content-Type": "application/json",
       }),
       JSON.stringify({
         identification: {
@@ -167,7 +167,7 @@ export class Client {
       "POST",
       new HttpHeaders({
         ...this.getHeaders().toObject(),
-        "content-type": "application/json",
+        "Content-Type": "application/json",
       }),
       JSON.stringify({
         email: args.email,
@@ -214,7 +214,7 @@ export class Client {
       "POST",
       new HttpHeaders({
         ...this.getHeaders().toObject(),
-        "content-type": "application/json",
+        "Content-Type": "application/json",
       }),
       JSON.stringify({
         accountId: args.accountId,
