@@ -125,7 +125,10 @@ export class Client {
     const request = new HttpRequest(
       this.createURL("/events"),
       "POST",
-      this.getHeaders(),
+      new HttpHeaders({
+        ...this.getHeaders().toObject(),
+        "Content-Type": "application/json",
+      }),
       JSON.stringify({
         identification: {
           userId: event.getUserId(),
@@ -169,7 +172,10 @@ export class Client {
     const request = new HttpRequest(
       this.createURL("/users/upsert"),
       "POST",
-      this.getHeaders(),
+      new HttpHeaders({
+        ...this.getHeaders().toObject(),
+        "Content-Type": "application/json",
+      }),
       JSON.stringify({
         email: args.email,
         userId: args.userId,
@@ -212,7 +218,10 @@ export class Client {
     const request = new HttpRequest(
       this.createURL("/accounts/upsert"),
       "POST",
-      this.getHeaders(),
+      new HttpHeaders({
+        ...this.getHeaders().toObject(),
+        "Content-Type": "application/json",
+      }),
       JSON.stringify({
         accountId: args.accountId,
         name: args.name,

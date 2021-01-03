@@ -243,7 +243,10 @@ describe("Client", () => {
       const expectedRequest = new HttpRequest(
         new URL("https://api.test.com/events"),
         "POST",
-        keySecretHeader,
+        new HttpHeaders({
+          "x-api-key": "key-secret",
+          "content-type": "application/json",
+        }),
         JSON.stringify({
           identification: {
             userId: "test@journy.io",
@@ -269,7 +272,10 @@ describe("Client", () => {
       const expectedRequest = new HttpRequest(
         new URL("https://api.test.com/events"),
         "POST",
-        keySecretHeader,
+        new HttpHeaders({
+          "x-api-key": "key-secret",
+          "content-type": "application/json",
+        }),
         JSON.stringify({
           identification: {
             userId: "test@journy.io",
@@ -297,7 +303,10 @@ describe("Client", () => {
       const expectedRequest = new HttpRequest(
         new URL("https://api.test.com/events"),
         "POST",
-        keySecretHeader,
+        new HttpHeaders({
+          "x-api-key": "key-secret",
+          "content-type": "application/json",
+        }),
         JSON.stringify({
           identification: {
             userId: "test@journy.io",
@@ -326,7 +335,10 @@ describe("Client", () => {
       const expectedRequest = new HttpRequest(
         new URL("https://api.test.com/events"),
         "POST",
-        keySecretHeader,
+        new HttpHeaders({
+          "x-api-key": "key-secret",
+          "content-type": "application/json",
+        }),
         JSON.stringify({
           identification: {
             userId: "userId",
@@ -380,7 +392,10 @@ describe("Client", () => {
       const expectedRequest = new HttpRequest(
         new URL("https://api.test.com/users/upsert"),
         "POST",
-        new HttpHeaders({ "x-api-key": "key-secret" }),
+        new HttpHeaders({
+          "x-api-key": "key-secret",
+          "content-type": "application/json",
+        }),
         JSON.stringify({
           email: "test@journy.io",
           userId: "userId",
@@ -416,7 +431,10 @@ describe("Client", () => {
       const expectedRequest = new HttpRequest(
         new URL("https://api.test.com/users/upsert"),
         "POST",
-        new HttpHeaders({ "x-api-key": "key-secret" }),
+        new HttpHeaders({
+          "x-api-key": "key-secret",
+          "content-type": "application/json",
+        }),
         JSON.stringify({
           email: "test@journy.io",
           userId: "invalid",
@@ -487,7 +505,10 @@ describe("Client", () => {
       const expectedRequest = new HttpRequest(
         new URL("https://api.test.com/accounts/upsert"),
         "POST",
-        new HttpHeaders({ "x-api-key": "key-secret" }),
+        new HttpHeaders({
+          "x-api-key": "key-secret",
+          "content-type": "application/json",
+        }),
         JSON.stringify({
           accountId: "accountId",
           name: "accountName",
@@ -561,7 +582,10 @@ describe("Client", () => {
       const expectedRequest = new HttpRequest(
         new URL("https://api.test.com/accounts/upsert"),
         "POST",
-        new HttpHeaders({ "x-api-key": "key-secret" }),
+        new HttpHeaders({
+          "x-api-key": "key-secret",
+          "content-type": "application/json",
+        }),
         JSON.stringify({
           accountId: "accountId",
           name: "journy.io",
