@@ -1,11 +1,11 @@
 import { AppEvent } from "./AppEvent";
-import { Client, APIError, Config } from "./Client";
+import { APIError, Client, Config } from "./Client";
 import {
+  HttpClient,
+  HttpClientFixed,
   HttpHeaders,
   HttpRequest,
   HttpResponse,
-  HttpClientFixed,
-  HttpClient,
 } from "@journyio/http";
 import { URL } from "url";
 
@@ -44,9 +44,13 @@ describe("Client", () => {
     apiKey: "non-existing-key-secret",
     rootUrl: "https://api.test.com",
   };
-  const keySecretHeader = new HttpHeaders({ "x-api-key": "key-secret" });
+  const keySecretHeader = new HttpHeaders({
+    "x-api-key": "key-secret",
+    "content-type": "application/json",
+  });
   const nonExistingKeySecretHeader = new HttpHeaders({
     "x-api-key": "non-existing-key-secret",
+    "content-type": "application/json",
   });
   const rateLimitHeader = new HttpHeaders({ "X-RateLimit-Remaining": "5000" });
   const tooManyRateLimitHeader = new HttpHeaders({
@@ -150,11 +154,6 @@ describe("Client", () => {
 
     it("correctly gives an unknown error if something bad happens", async () => {
       const validateClient = new HttpClientThatThrows();
-      const expectedRequest = new HttpRequest(
-        new URL("https://api.test.com/validate"),
-        "GET",
-        keySecretHeader
-      );
 
       const client = new Client(validateClient, clientConfig);
       const response = await client.getApiKeyDetails();
@@ -442,14 +441,14 @@ describe("Client", () => {
         }),
         JSON.stringify({
           email: "test@journy.io",
-          userId: "",
+          userId: "invalid",
         })
       );
 
       const client = new Client(propertiesClient, clientConfig);
       const response1 = await client.upsertAppUser({
         email: "test@journy.io",
-        userId: "",
+        userId: "invalid",
       });
 
       expect(propertiesClient.getLastRequest()).toEqual(expectedRequest);
@@ -460,6 +459,24 @@ describe("Client", () => {
         expect(response1.error).toBeDefined();
         expect(response1.error).toEqual(APIError.BadArgumentsError);
       }
+    });
+
+    it("correctly throws when the input parameters are empty", async () => {
+      const propertiesClient = new HttpClientFixed(badRequestResponse);
+
+      const client = new Client(propertiesClient, clientConfig);
+      await expect(
+        client.upsertAppUser({
+          email: "test@journy.io",
+          userId: "",
+        })
+      ).rejects.toThrow("User ID cannot be empty!");
+      await expect(
+        client.upsertAppUser({
+          email: "",
+          userId: "userId",
+        })
+      ).rejects.toThrow("Email cannot be empty!");
     });
   });
 
@@ -526,6 +543,47 @@ describe("Client", () => {
       expect(response.callsRemaining).toEqual(5000);
     });
 
+    it("correctly works with members", async () => {
+      const propertiesClient = new HttpClientFixed(createdResponse);
+      const expectedRequest = new HttpRequest(
+        new URL("https://api.test.com/accounts/upsert"),
+        "POST",
+        new HttpHeaders({
+          "x-api-key": "key-secret",
+          "content-type": "application/json",
+        }),
+        JSON.stringify({
+          accountId: "accountId",
+          name: "accountName",
+          properties: {
+            hasDogs: "2",
+            boughtDog: "2020-08-27T12:08:21.000Z",
+            likesDog: "true",
+            firstDogName: "Journy",
+          },
+          members: ["memberId", "memberId2"],
+        })
+      );
+
+      const client = new Client(propertiesClient, clientConfig);
+      const response = await client.upsertAppAccount({
+        accountId: "accountId",
+        name: "accountName",
+        properties: {
+          hasDogs: "2",
+          boughtDog: new Date("2020-08-27T12:08:21+00:00"),
+          likesDog: "true",
+          firstDogName: "Journy",
+        },
+        memberIds: ["memberId", "memberId2"],
+      });
+
+      expect(propertiesClient.getLastRequest()).toEqual(expectedRequest);
+      expect(response).toBeDefined();
+      expect(response.success).toBeTruthy();
+      expect(response.callsRemaining).toEqual(5000);
+    });
+
     it("correctly shows when the input parameters are invalid", async () => {
       const propertiesClient = new HttpClientFixed(badRequestResponse);
       const expectedRequest = new HttpRequest(
@@ -567,6 +625,118 @@ describe("Client", () => {
         expect(response1.error).toBeDefined();
         expect(response1.error).toEqual(APIError.BadArgumentsError);
       }
+    });
+
+    it("correctly throws when the input parameters are empty", async () => {
+      const propertiesClient = new HttpClientFixed(badRequestResponse);
+
+      const client = new Client(propertiesClient, clientConfig);
+      await expect(
+        client.upsertAppAccount({
+          name: "name",
+          accountId: "",
+        })
+      ).rejects.toThrow("Account ID cannot be empty!");
+      await expect(
+        client.upsertAppAccount({
+          name: "",
+          accountId: "accountId",
+        })
+      ).rejects.toThrow("Account name cannot be empty!");
+    });
+  });
+
+  describe("link", () => {
+    it("correctly handles errors being thrown", async () => {
+      const propertiesClient = new HttpClientThatThrows();
+
+      const client = new Client(propertiesClient, clientConfig);
+      const response = await client.link({
+        deviceId: "deviceId",
+        userId: "userId",
+      });
+
+      expect(response).toBeDefined();
+      expect(response.success).toBeFalsy();
+      expect(response.callsRemaining).toEqual(undefined);
+      if (!response.success) {
+        expect(response.error).toEqual(APIError.UnknownError);
+      }
+    });
+
+    it("correctly links users and devideIds", async () => {
+      const propertiesClient = new HttpClientFixed(createdResponse);
+      const expectedRequest = new HttpRequest(
+        new URL("https://api.test.com/link"),
+        "POST",
+        new HttpHeaders({
+          "x-api-key": "key-secret",
+          "content-type": "application/json",
+        }),
+        JSON.stringify({
+          deviceId: "deviceId",
+          userId: "userId",
+        })
+      );
+
+      const client = new Client(propertiesClient, clientConfig);
+      const response = await client.link({
+        deviceId: "deviceId",
+        userId: "userId",
+      });
+
+      expect(propertiesClient.getLastRequest()).toEqual(expectedRequest);
+      expect(response).toBeDefined();
+      expect(response.success).toBeTruthy();
+      expect(response.callsRemaining).toEqual(5000);
+    });
+
+    it("correctly shows when the input parameters are invalid", async () => {
+      const propertiesClient = new HttpClientFixed(badRequestResponse);
+      const expectedRequest = new HttpRequest(
+        new URL("https://api.test.com/link"),
+        "POST",
+        new HttpHeaders({
+          "x-api-key": "key-secret",
+          "content-type": "application/json",
+        }),
+        JSON.stringify({
+          deviceId: "invalid",
+          userId: "userId",
+        })
+      );
+
+      const client = new Client(propertiesClient, clientConfig);
+      const response = await client.link({
+        deviceId: "invalid",
+        userId: "userId",
+      });
+
+      expect(propertiesClient.getLastRequest()).toEqual(expectedRequest);
+      expect(response).toBeDefined();
+      expect(response.success).toBeFalsy();
+      expect(response.callsRemaining).toEqual(5000);
+      if (!response.success) {
+        expect(response.error).toBeDefined();
+        expect(response.error).toEqual(APIError.BadArgumentsError);
+      }
+    });
+    it("correctly throws when the input parameters are empty", async () => {
+      const propertiesClient = new HttpClientFixed(badRequestResponse);
+
+      const client = new Client(propertiesClient, clientConfig);
+      await expect(
+        client.link({
+          deviceId: "name",
+          userId: "",
+        })
+      ).rejects.toThrow("User ID cannot be empty!");
+      await expect(
+        client.link({
+          deviceId: "",
+          userId: "userId",
+        })
+      ).rejects.toThrow("Device ID cannot be empty!");
     });
   });
 
@@ -644,6 +814,16 @@ describe("Client", () => {
       if (!response.success) {
         expect(response.error).toEqual(APIError.NotFoundError);
       }
+    });
+    it("correctly throws when the input parameters are empty", async () => {
+      const propertiesClient = new HttpClientFixed(badRequestResponse);
+
+      const client = new Client(propertiesClient, clientConfig);
+      await expect(
+        client.getTrackingSnippet({
+          domain: "",
+        })
+      ).rejects.toThrow("Domain cannot be empty!");
     });
   });
 });

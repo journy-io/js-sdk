@@ -1,5 +1,3 @@
-import { Error } from "./Client";
-
 export class AppEvent {
   private constructor(
     private readonly name: string,

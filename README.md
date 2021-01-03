@@ -97,7 +97,26 @@ await client.upsertAppAccount({
 });
 ```
 
+#### Link web visitor to an app user
+
+You can link a web visitor to a user in your application when you have our snippet installed on your website. The snippet sets a cookie named `__journey`. If the cookie exists, you can link the web visitor to the user that is currently logged in:
+
+```ts
+if (request.cookies["__journey"]) {
+  const result = await client.link({
+    deviceId: request.cookies["__journey"],
+    userId: request.user.id,
+  });
+}
+```
+
+(The above example is for express based application using [https://github.com/expressjs/cookie-parser](https://github.com/expressjs/cookie-parser))
+
 #### Add event
+
+Make sure the user and/or account exists in journy.io before adding an event.
+
+See [Create or update user](#create-or-update-user) and [Create or update account](#create-or-update-account)
 
 ```ts
 import { AppEvent } from "./Client";
@@ -125,7 +144,7 @@ if (result.success) {
 
 ### Handling errors
 
-Every call will return a result, we don't throw errors when a call fails because working with `Error` instances is not great in JavaScript.
+Every call will return a result, we don't throw errors when a call fails because working with `Error` instances is not great in JavaScript. An exception is made for input parameters that are empty that should not be empty. 
 
 You can check whether the call succeeded using `result.success`:
 
@@ -138,6 +157,10 @@ if (!result.success) {
   console.log(result.error); // string
   console.log(result.requestId); // string
 }
+
+await client.getTrackingSnippet({
+  domain: "", // empty string will throw
+});
 ```
 
 The request ID can be useful when viewing API logs in [journy.io](https://app.journy.io?utm_source=github&utm_content=readme-js-sdk).

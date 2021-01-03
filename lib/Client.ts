@@ -162,6 +162,13 @@ export class Client {
   async upsertAppUser(
     args: UpsertAppUserArguments
   ): Promise<Result<undefined>> {
+    if (!args.email) {
+      throw new Error(`Email cannot be empty!`);
+    }
+    if (!args.userId) {
+      throw new Error(`User ID cannot be empty!`);
+    }
+
     const request = new HttpRequest(
       this.createURL("/users/upsert"),
       "POST",
@@ -204,7 +211,6 @@ export class Client {
     if (!args.accountId) {
       throw new Error("Account ID cannot be empty!");
     }
-
     if (!args.name) {
       throw new Error("Account name cannot be empty!");
     }
@@ -248,6 +254,47 @@ export class Client {
     }
   }
 
+  async link(args: LinkArguments): Promise<Result<undefined>> {
+    if (!args.deviceId) {
+      throw new Error(`Device ID cannot be empty!`);
+    }
+    if (!args.userId) {
+      throw new Error(`User ID cannot be empty!`);
+    }
+
+    const request = new HttpRequest(
+      this.createURL(`/link`),
+      "POST",
+      new HttpHeaders({
+        ...this.getHeaders().toObject(),
+        "Content-Type": "application/json",
+      }),
+      JSON.stringify({
+        deviceId: args.deviceId,
+        userId: args.userId,
+      })
+    );
+
+    try {
+      const response = await this.httpClient.send(request);
+
+      if (response.getStatusCode() < 200 || response.getStatusCode() >= 300) {
+        return this.handleError(response);
+      }
+
+      const remaining = Client.parseCallsRemaining(response);
+
+      return {
+        success: true,
+        requestId: JSON.parse(response.getBody()).meta.requestId,
+        callsRemaining: remaining !== undefined ? parseInt(remaining, 10) : 0,
+        data: undefined,
+      };
+    } catch (error) {
+      return this.handleError(error);
+    }
+  }
+
   async getTrackingSnippet(
     args: GetTrackingSnippetArguments
   ): Promise<Result<TrackingSnippetResponse>> {
@@ -260,7 +307,10 @@ export class Client {
     const request = new HttpRequest(
       this.createURL(`/tracking/snippet?domain=${encodeURIComponent(domain)}`),
       "GET",
-      this.getHeaders()
+      new HttpHeaders({
+        ...this.getHeaders().toObject(),
+        "Content-Type": "application/json",
+      })
     );
 
     try {
@@ -292,7 +342,10 @@ export class Client {
     const request = new HttpRequest(
       this.createURL("/validate"),
       "GET",
-      this.getHeaders()
+      new HttpHeaders({
+        ...this.getHeaders().toObject(),
+        "Content-Type": "application/json",
+      })
     );
 
     try {
@@ -375,6 +428,11 @@ export interface UpsertAppAccountArguments {
   name: string;
   properties?: Properties;
   memberIds?: string[];
+}
+
+export interface LinkArguments {
+  deviceId: string;
+  userId: string;
 }
 
 export interface GetTrackingSnippetArguments {
