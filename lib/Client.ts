@@ -159,6 +159,13 @@ export class Client {
   async upsertAppUser(
     args: UpsertAppUserArguments
   ): Promise<Result<undefined>> {
+    if (!args.email) {
+      throw new Error(`Email cannot be empty!`);
+    }
+    if (!args.userId) {
+      throw new Error(`User ID cannot be empty!`);
+    }
+
     const request = new HttpRequest(
       this.createURL("/users/upsert"),
       "POST",
@@ -198,7 +205,6 @@ export class Client {
     if (!args.accountId) {
       throw new Error("Account ID cannot be empty!");
     }
-
     if (!args.name) {
       throw new Error("Account name cannot be empty!");
     }
@@ -240,6 +246,13 @@ export class Client {
   }
 
   async link(args: LinkArguments): Promise<Result<undefined>> {
+    if (!args.deviceId) {
+      throw new Error(`Device ID cannot be empty!`);
+    }
+    if (!args.userId) {
+      throw new Error(`User ID cannot be empty!`);
+    }
+
     const request = new HttpRequest(
       this.createURL(`/link`),
       "POST",
