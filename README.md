@@ -97,16 +97,24 @@ await client.upsertAppAccount({
 });
 ```
 
-#### Link DeviceID to a UserID
+#### Link web visitor to an app user
+
+You can link a web visitor to a user in your application when you have our snippet installed on your website. The snippet sets a cookie named `__journey`. If the cookie exists, you can link the web visitor to the user that is currently logged in:
 
 ```ts
-const result = await client.link({
-  deviceId: "device-id",
-  userId: "user-id"
-});
+if (request.cookies["__journey"]) {
+  const result = await client.link({
+    deviceId: request.cookies["__journey"],
+    userId: request.user.id,
+  });
+}
 ```
 
+(The above example is for express based application using [https://github.com/expressjs/cookie-parser](https://github.com/expressjs/cookie-parser))
+
 #### Add event
+
+Always create the user and/or account first using 
 
 ```ts
 import { AppEvent } from "./Client";
