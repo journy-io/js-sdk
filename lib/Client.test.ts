@@ -44,9 +44,13 @@ describe("Client", () => {
     apiKey: "non-existing-key-secret",
     rootUrl: "https://api.test.com",
   };
-  const keySecretHeader = new HttpHeaders({ "x-api-key": "key-secret" });
+  const keySecretHeader = new HttpHeaders({
+    "x-api-key": "key-secret",
+    "content-type": "application/json",
+  });
   const nonExistingKeySecretHeader = new HttpHeaders({
     "x-api-key": "non-existing-key-secret",
+    "content-type": "application/json",
   });
   const rateLimitHeader = new HttpHeaders({ "X-RateLimit-Remaining": "5000" });
   const tooManyRateLimitHeader = new HttpHeaders({
@@ -544,7 +548,10 @@ describe("Client", () => {
       const expectedRequest = new HttpRequest(
         new URL("https://api.test.com/accounts/upsert"),
         "POST",
-        new HttpHeaders({ "x-api-key": "key-secret" }),
+        new HttpHeaders({
+          "x-api-key": "key-secret",
+          "content-type": "application/json",
+        }),
         JSON.stringify({
           accountId: "accountId",
           name: "accountName",
@@ -662,7 +669,10 @@ describe("Client", () => {
       const expectedRequest = new HttpRequest(
         new URL("https://api.test.com/link"),
         "POST",
-        new HttpHeaders({ "x-api-key": "key-secret" }),
+        new HttpHeaders({
+          "x-api-key": "key-secret",
+          "content-type": "application/json",
+        }),
         JSON.stringify({
           deviceId: "deviceId",
           userId: "userId",
@@ -686,7 +696,10 @@ describe("Client", () => {
       const expectedRequest = new HttpRequest(
         new URL("https://api.test.com/link"),
         "POST",
-        new HttpHeaders({ "x-api-key": "key-secret" }),
+        new HttpHeaders({
+          "x-api-key": "key-secret",
+          "content-type": "application/json",
+        }),
         JSON.stringify({
           deviceId: "invalid",
           userId: "userId",

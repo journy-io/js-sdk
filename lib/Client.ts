@@ -265,7 +265,10 @@ export class Client {
     const request = new HttpRequest(
       this.createURL(`/link`),
       "POST",
-      this.getHeaders(),
+      new HttpHeaders({
+        ...this.getHeaders().toObject(),
+        "Content-Type": "application/json",
+      }),
       JSON.stringify({
         deviceId: args.deviceId,
         userId: args.userId,
@@ -304,7 +307,10 @@ export class Client {
     const request = new HttpRequest(
       this.createURL(`/tracking/snippet?domain=${encodeURIComponent(domain)}`),
       "GET",
-      this.getHeaders()
+      new HttpHeaders({
+        ...this.getHeaders().toObject(),
+        "Content-Type": "application/json",
+      })
     );
 
     try {
@@ -336,7 +342,10 @@ export class Client {
     const request = new HttpRequest(
       this.createURL("/validate"),
       "GET",
-      this.getHeaders()
+      new HttpHeaders({
+        ...this.getHeaders().toObject(),
+        "Content-Type": "application/json",
+      })
     );
 
     try {

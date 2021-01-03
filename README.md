@@ -97,6 +97,15 @@ await client.upsertAppAccount({
 });
 ```
 
+#### Link DeviceID to a UserID
+
+```ts
+const result = await client.link({
+  deviceId: "device-id",
+  userId: "user-id"
+});
+```
+
 #### Add event
 
 ```ts
@@ -125,7 +134,7 @@ if (result.success) {
 
 ### Handling errors
 
-Every call will return a result, we don't throw errors when a call fails because working with `Error` instances is not great in JavaScript.
+Every call will return a result, we don't throw errors when a call fails because working with `Error` instances is not great in JavaScript. An exception is made for input parameters that are empty that should not be empty. 
 
 You can check whether the call succeeded using `result.success`:
 
@@ -138,6 +147,10 @@ if (!result.success) {
   console.log(result.error); // string
   console.log(result.requestId); // string
 }
+
+await client.getTrackingSnippet({
+  domain: "", // empty string will throw
+});
 ```
 
 The request ID can be useful when viewing API logs in [journy.io](https://app.journy.io?utm_source=github&utm_content=readme-js-sdk).
