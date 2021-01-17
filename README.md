@@ -66,8 +66,11 @@ _Note: when sending an empty value (`""`) as value for a property, the property 
 
 ```ts
 await client.upsertAppUser({
+  // required
   userId: "userId",
   email: "name@domain.tld",
+
+  // optional
   properties: {
     age: 26,
     name: "John Doe",
@@ -84,8 +87,11 @@ _Note: when sending an empty value (`""`) as value for a property, the property 
 
 ```ts
 await client.upsertAppAccount({
+  // required
   accountId: "accountId",
   name: "journy.io",
+
+  // optional
   properties: {
     age: 26,
     name: "John Doe",
@@ -93,6 +99,8 @@ await client.upsertAppAccount({
     registered_at: new Date(...),
     this_property_will_be_deleted: "",
   },
+
+  // optional
   members: ["userId", "userId"]
 });
 ```
