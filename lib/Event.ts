@@ -1,9 +1,12 @@
-export class AppEvent {
+export type Metadata = { [key: string]: string | number | boolean | Date };
+
+export class Event {
   private constructor(
     private readonly name: string,
     private readonly userId: string | undefined,
     private readonly accountId: string | undefined,
-    private readonly date: Date | undefined
+    private readonly date: Date | undefined,
+    private readonly metadata: Metadata
   ) {
     if (!this.name) {
       throw new Error("Event name cannot be empty!");
@@ -26,8 +29,25 @@ export class AppEvent {
     return this.date;
   }
 
+  getMetadata() {
+    return this.metadata;
+  }
+
   happenedAt(date: Date) {
-    return new AppEvent(this.name, this.userId, this.accountId, date);
+    return new Event(
+      this.name,
+      this.userId,
+      this.accountId,
+      date,
+      this.metadata
+    );
+  }
+
+  withMetadata(metadata: Metadata) {
+    return new Event(this.name, this.userId, this.accountId, this.date, {
+      ...this.metadata,
+      ...metadata,
+    });
   }
 
   static forUser(name: string, userId: string) {
@@ -35,7 +55,7 @@ export class AppEvent {
       throw new Error("User ID cannot be empty!");
     }
 
-    return new AppEvent(name, userId, undefined, undefined);
+    return new Event(name, userId, undefined, undefined, {});
   }
 
   static forAccount(name: string, accountId: string) {
@@ -43,7 +63,7 @@ export class AppEvent {
       throw new Error("Account ID cannot be empty!");
     }
 
-    return new AppEvent(name, undefined, accountId, undefined);
+    return new Event(name, undefined, accountId, undefined, {});
   }
 
   static forUserInAccount(name: string, userId: string, accountId: string) {
@@ -55,6 +75,6 @@ export class AppEvent {
       throw new Error("Account ID cannot be empty!");
     }
 
-    return new AppEvent(name, userId, accountId, undefined);
+    return new Event(name, userId, accountId, undefined, {});
   }
 }

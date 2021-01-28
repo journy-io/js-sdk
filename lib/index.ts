@@ -1,2 +1,17 @@
-export * from "./Client";
-export { AppEvent } from "./AppEvent";
+/* eslint-disable import/no-unused-modules */
+export {
+  Client,
+  Config,
+  ApiKeyDetails,
+  GetTrackingSnippetArguments,
+  LinkArguments,
+  Properties,
+  Result,
+  Success,
+  Error,
+  APIError,
+  TrackingSnippetResponse,
+  UpsertAccountArguments,
+  UpsertUserArguments,
+} from "./Client";
+export { Event, Metadata } from "./Event";

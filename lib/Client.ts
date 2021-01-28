@@ -6,7 +6,7 @@ import {
   HttpResponse,
 } from "@journyio/http";
 import { URL } from "url";
-import { AppEvent } from "./AppEvent";
+import { Event, Metadata } from "./Event";
 
 export interface Config {
   apiKey: string;
@@ -100,27 +100,49 @@ export class Client {
 
   // noinspection JSMethodCanBeStatic
   private stringifyProperties(properties: Properties) {
-    const newProperties: Properties = {};
-    for (const key of Object.keys(properties)) {
-      const value = properties[key];
+    const formatted: { [name: string]: string } = {};
+    for (const name of Object.keys(properties)) {
+      const value = properties[name];
 
       if (
         typeof value === "string" ||
         typeof value === "boolean" ||
         typeof value === "number"
       ) {
-        newProperties[key] = String(value);
+        formatted[name] = String(value);
       }
 
       if (value instanceof Date) {
-        newProperties[key] = value.toISOString();
+        formatted[name] = value.toISOString();
       }
     }
 
-    return newProperties;
+    return formatted;
   }
 
-  async addEvent(event: AppEvent): Promise<Result<undefined>> {
+  // noinspection JSMethodCanBeStatic
+  private stringifyMetadata(metadata: Metadata) {
+    const formatted: { [key: string]: string } = {};
+    for (const key of Object.keys(metadata)) {
+      const value = metadata[key];
+
+      if (
+        typeof value === "string" ||
+        typeof value === "boolean" ||
+        typeof value === "number"
+      ) {
+        formatted[key] = String(value);
+      }
+
+      if (value instanceof Date) {
+        formatted[key] = value.toISOString();
+      }
+    }
+
+    return formatted;
+  }
+
+  async addEvent(event: Event): Promise<Result<undefined>> {
     const date = event.getDate();
     const request = new HttpRequest(
       this.createURL("/events"),
@@ -136,6 +158,10 @@ export class Client {
         },
         name: event.getName(),
         triggeredAt: date ? date.toISOString() : undefined,
+        metadata:
+          Object.keys(event.getMetadata()).length > 0
+            ? this.stringifyMetadata(event.getMetadata())
+            : undefined,
       })
     );
 
@@ -159,9 +185,7 @@ export class Client {
     }
   }
 
-  async upsertAppUser(
-    args: UpsertAppUserArguments
-  ): Promise<Result<undefined>> {
+  async upsertAppUser(args: UpsertUserArguments): Promise<Result<undefined>> {
     if (!args.email) {
       throw new Error(`Email cannot be empty!`);
     }
@@ -206,7 +230,7 @@ export class Client {
   }
 
   async upsertAppAccount(
-    args: UpsertAppAccountArguments
+    args: UpsertAccountArguments
   ): Promise<Result<undefined>> {
     if (!args.accountId) {
       throw new Error("Account ID cannot be empty!");
@@ -417,13 +441,13 @@ export interface ApiKeyDetails {
   permissions: string[];
 }
 
-export interface UpsertAppUserArguments {
+export interface UpsertUserArguments {
   email: string;
   userId: string;
   properties?: Properties;
 }
 
-export interface UpsertAppAccountArguments {
+export interface UpsertAccountArguments {
   accountId: string;
   name: string;
   properties?: Properties;

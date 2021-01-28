@@ -65,7 +65,7 @@ if (result.success) {
 _Note: when sending an empty value (`""`) as value for a property, the property will be deleted._
 
 ```ts
-await client.upsertAppUser({
+await client.upsertUser({
   // required
   userId: "userId",
   email: "name@domain.tld",
@@ -75,7 +75,7 @@ await client.upsertAppUser({
     age: 26,
     name: "John Doe",
     is_developer: true,
-    registered_at: new Date(...),
+    registered_at: new Date(/* ... */),
     this_property_will_be_deleted: "",
   },
 });
@@ -86,7 +86,7 @@ await client.upsertAppUser({
 _Note: when sending an empty value (`""`) as value for a property, the property will be deleted._
 
 ```ts
-await client.upsertAppAccount({
+await client.upsertAccount({
   // required
   accountId: "accountId",
   name: "journy.io",
@@ -96,7 +96,7 @@ await client.upsertAppAccount({
     age: 26,
     name: "John Doe",
     is_developer: true,
-    registered_at: new Date(...),
+    registered_at: new Date(/* ... */),
     this_property_will_be_deleted: "",
   },
 
@@ -127,12 +127,16 @@ Make sure the user and/or account exists in journy.io before adding an event.
 See [Create or update user](#create-or-update-user) and [Create or update account](#create-or-update-account)
 
 ```ts
-import { AppEvent } from "./Client";
+import { Event } from "./Client";
 
-event = AppEvent.forUser("login", "userId");
-event = AppEvent.forUser("some_historic_event", "userId").happenedAt(new Date(...));
-event = AppEvent.forAccount("reached_monthly_volume", "accountId");
-event = AppEvent.forUserInAccount("updated_settings", "userId", "accountId");
+event = Event.forUser("login", "userId");
+event = Event.forUser("some_historic_event", "userId").happenedAt(new Date(...));
+event = Event.forAccount("reached_monthly_volume", "accountId").withMetadata({
+  "number": 1313,
+  "string": "string",
+  "boolean": true,
+});
+event = Event.forUserInAccount("updated_settings", "userId", "accountId");
 
 await client.addEvent(event);
 ```

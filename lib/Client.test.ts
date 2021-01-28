@@ -1,4 +1,5 @@
-import { AppEvent } from "./AppEvent";
+/* eslint-disable security/detect-non-literal-fs-filename */
+import { Event } from "./Event";
 import { APIError, Client, Config } from "./Client";
 import {
   HttpClient,
@@ -231,7 +232,7 @@ describe("Client", () => {
 
       const client = new Client(eventClient, clientConfig);
       const response = await client.addEvent(
-        AppEvent.forUserInAccount("tag", "test@journy.io", "accountId")
+        Event.forUserInAccount("tag", "test@journy.io", "accountId")
       );
 
       expect(response).toBeDefined();
@@ -242,7 +243,7 @@ describe("Client", () => {
       }
     });
 
-    it("correctly tracks an event", async () => {
+    it("correctly adds an event", async () => {
       const eventClient = new HttpClientFixed(createdResponse);
       const expectedRequest = new HttpRequest(
         new URL("https://api.test.com/events"),
@@ -262,7 +263,45 @@ describe("Client", () => {
 
       const client = new Client(eventClient, clientConfig);
       const response = await client.addEvent(
-        AppEvent.forUserInAccount("tag", "test@journy.io", "accountId")
+        Event.forUserInAccount("tag", "test@journy.io", "accountId")
+      );
+
+      expect(eventClient.getLastRequest()).toEqual(expectedRequest);
+      expect(response).toBeDefined();
+      expect(response.success).toBeTruthy();
+      expect(response.callsRemaining).toEqual(5000);
+    });
+
+    it("correctly adds an event with metadata and date", async () => {
+      const eventClient = new HttpClientFixed(createdResponse);
+      const date = new Date();
+      const expectedRequest = new HttpRequest(
+        new URL("https://api.test.com/events"),
+        "POST",
+        new HttpHeaders({
+          "x-api-key": "key-secret",
+          "content-type": "application/json",
+        }),
+        JSON.stringify({
+          identification: {
+            userId: "userId",
+            accountId: "accountId",
+          },
+          name: "event",
+          triggeredAt: date.toISOString(),
+          metadata: {
+            number: "1",
+            boolean: "true",
+            string: "string",
+          },
+        })
+      );
+
+      const client = new Client(eventClient, clientConfig);
+      const response = await client.addEvent(
+        Event.forUserInAccount("event", "userId", "accountId")
+          .happenedAt(date)
+          .withMetadata({ number: 1, boolean: true, string: "string" })
       );
 
       expect(eventClient.getLastRequest()).toEqual(expectedRequest);
@@ -291,7 +330,7 @@ describe("Client", () => {
 
       const client = new Client(eventClient, clientConfig);
       const response = await client.addEvent(
-        AppEvent.forUser("tag", "test@journy.io").happenedAt(
+        Event.forUser("tag", "test@journy.io").happenedAt(
           new Date("2019-01-01T00:00:00.000Z")
         )
       );
@@ -321,7 +360,7 @@ describe("Client", () => {
 
       const client = new Client(eventClient, clientConfig);
       const response1 = await client.addEvent(
-        AppEvent.forUser("tag", "test@journy.io")
+        Event.forUser("tag", "test@journy.io")
       );
 
       expect(eventClient.getLastRequest()).toEqual(expectedRequest);
@@ -352,9 +391,7 @@ describe("Client", () => {
       );
 
       const client = new Client(eventClient, clientConfig);
-      const response1 = await client.addEvent(
-        AppEvent.forUser("tag", "userId")
-      );
+      const response1 = await client.addEvent(Event.forUser("tag", "userId"));
 
       expect(eventClient.getLastRequest()).toEqual(expectedRequest);
       expect(response1).toBeDefined();
