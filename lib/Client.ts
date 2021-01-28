@@ -185,7 +185,7 @@ export class Client {
     }
   }
 
-  async upsertAppUser(args: UpsertUserArguments): Promise<Result<undefined>> {
+  async upsertUser(args: UpsertUserArguments): Promise<Result<undefined>> {
     if (!args.email) {
       throw new Error(`Email cannot be empty!`);
     }
@@ -229,7 +229,7 @@ export class Client {
     }
   }
 
-  async upsertAppAccount(
+  async upsertAccount(
     args: UpsertAccountArguments
   ): Promise<Result<undefined>> {
     if (!args.accountId) {

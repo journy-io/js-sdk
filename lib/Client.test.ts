@@ -409,7 +409,7 @@ describe("Client", () => {
       const propertiesClient = new HttpClientThatThrows();
 
       const client = new Client(propertiesClient, clientConfig);
-      const response = await client.upsertAppUser({
+      const response = await client.upsertUser({
         email: "test@journy.io",
         userId: "userId",
         properties: {
@@ -450,7 +450,7 @@ describe("Client", () => {
       );
 
       const client = new Client(propertiesClient, clientConfig);
-      const response = await client.upsertAppUser({
+      const response = await client.upsertUser({
         email: "test@journy.io",
         userId: "userId",
         properties: {
@@ -483,7 +483,7 @@ describe("Client", () => {
       );
 
       const client = new Client(propertiesClient, clientConfig);
-      const response1 = await client.upsertAppUser({
+      const response1 = await client.upsertUser({
         email: "test@journy.io",
         userId: "invalid",
       });
@@ -503,13 +503,13 @@ describe("Client", () => {
 
       const client = new Client(propertiesClient, clientConfig);
       await expect(
-        client.upsertAppUser({
+        client.upsertUser({
           email: "test@journy.io",
           userId: "",
         })
       ).rejects.toThrow("User ID cannot be empty!");
       await expect(
-        client.upsertAppUser({
+        client.upsertUser({
           email: "",
           userId: "userId",
         })
@@ -522,7 +522,7 @@ describe("Client", () => {
       const propertiesClient = new HttpClientThatThrows();
 
       const client = new Client(propertiesClient, clientConfig);
-      const response = await client.upsertAppAccount({
+      const response = await client.upsertAccount({
         accountId: "accountId",
         name: "accountName",
         properties: {
@@ -563,7 +563,7 @@ describe("Client", () => {
       );
 
       const client = new Client(propertiesClient, clientConfig);
-      const response = await client.upsertAppAccount({
+      const response = await client.upsertAccount({
         accountId: "accountId",
         name: "accountName",
         properties: {
@@ -603,7 +603,7 @@ describe("Client", () => {
       );
 
       const client = new Client(propertiesClient, clientConfig);
-      const response = await client.upsertAppAccount({
+      const response = await client.upsertAccount({
         accountId: "accountId",
         name: "accountName",
         properties: {
@@ -643,7 +643,7 @@ describe("Client", () => {
       );
 
       const client = new Client(propertiesClient, clientConfig);
-      const response1 = await client.upsertAppAccount({
+      const response1 = await client.upsertAccount({
         accountId: "accountId",
         name: "journy.io",
         properties: {
@@ -669,13 +669,13 @@ describe("Client", () => {
 
       const client = new Client(propertiesClient, clientConfig);
       await expect(
-        client.upsertAppAccount({
+        client.upsertAccount({
           name: "name",
           accountId: "",
         })
       ).rejects.toThrow("Account ID cannot be empty!");
       await expect(
-        client.upsertAppAccount({
+        client.upsertAccount({
           name: "",
           accountId: "accountId",
         })
