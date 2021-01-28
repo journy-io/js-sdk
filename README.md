@@ -122,10 +122,6 @@ if (request.cookies["__journey"]) {
 
 #### Add event
 
-Make sure the user and/or account exists in journy.io before adding an event.
-
-See [Create or update user](#create-or-update-user) and [Create or update account](#create-or-update-account)
-
 ```ts
 import { Event } from "./Client";
 
