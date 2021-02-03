@@ -68,7 +68,7 @@ _Note: when sending an empty value (`""`) as value for a property, the property 
 ```ts
 await client.upsertUser({
   // required
-  userId: "userId",
+  userId: "userId", // Unique identifier for the user in your database
   email: "name@domain.tld",
 
   // optional
@@ -89,7 +89,7 @@ _Note: when sending an empty value (`""`) as value for a property, the property 
 ```ts
 await client.upsertAccount({
   // required
-  accountId: "accountId",
+  accountId: "accountId", // Unique identifier for the account in your database
   name: "journy.io",
 
   // optional
@@ -102,7 +102,7 @@ await client.upsertAccount({
   },
 
   // optional
-  members: ["userId", "userId"]
+  members: ["userId", "userId"], // Unique identifier for the user in your database
 });
 ```
 
@@ -114,7 +114,7 @@ You can link a web visitor to a user in your application when you have our snipp
 if (request.cookies["__journey"]) {
   const result = await client.link({
     deviceId: request.cookies["__journey"],
-    userId: request.user.id,
+    userId: request.user.id, // Unique identifier for the user in your database
   });
 }
 ```
