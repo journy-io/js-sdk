@@ -522,7 +522,6 @@ describe("Client", () => {
       const client = new Client(propertiesClient, clientConfig);
       const response = await client.upsertAccount({
         accountId: "accountId",
-        name: "accountName",
         domain: "your-domain.com",
         properties: {
           hasDogs: 2,
@@ -551,7 +550,6 @@ describe("Client", () => {
         }),
         JSON.stringify({
           identification: { accountId: "accountId", domain: "your-domain.com" },
-          name: "accountName",
           properties: {
             hasDogs: "2",
             boughtDog: "2020-08-27T12:08:21.000Z",
@@ -564,7 +562,6 @@ describe("Client", () => {
       const client = new Client(propertiesClient, clientConfig);
       const response = await client.upsertAccount({
         accountId: "accountId",
-        name: "accountName",
         domain: "your-domain.com",
         properties: {
           hasDogs: "2",
@@ -591,7 +588,6 @@ describe("Client", () => {
         }),
         JSON.stringify({
           identification: { accountId: "accountId", domain: "your-domain.com" },
-          name: "accountName",
           properties: {
             hasDogs: "2",
             boughtDog: "2020-08-27T12:08:21.000Z",
@@ -605,7 +601,6 @@ describe("Client", () => {
       const client = new Client(propertiesClient, clientConfig);
       const response = await client.upsertAccount({
         accountId: "accountId",
-        name: "accountName",
         domain: "your-domain.com",
         properties: {
           hasDogs: "2",
@@ -633,7 +628,6 @@ describe("Client", () => {
         }),
         JSON.stringify({
           identification: { accountId: "accountId", domain: "your-domain.com" },
-          name: "journy.io",
           properties: {
             hasDogs: "2",
             boughtDog: "2020-08-27T12:08:21.000Z",
@@ -646,7 +640,6 @@ describe("Client", () => {
       const client = new Client(propertiesClient, clientConfig);
       const response1 = await client.upsertAccount({
         accountId: "accountId",
-        name: "journy.io",
         domain: "your-domain.com",
         properties: {
           hasDogs: 2,
@@ -672,18 +665,10 @@ describe("Client", () => {
       const client = new Client(propertiesClient, clientConfig);
       await expect(
         client.upsertAccount({
-          name: "name",
           accountId: "",
           domain: "",
         })
       ).rejects.toThrow("Either a Domain or User ID must be set!");
-      await expect(
-        client.upsertAccount({
-          name: "",
-          accountId: "accountId",
-          domain: "your-domain.com",
-        })
-      ).rejects.toThrow("Account name cannot be empty!");
     });
   });
 

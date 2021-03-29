@@ -234,9 +234,6 @@ export class Client {
     if (!args.domain && !args.accountId) {
       throw new Error(`Either a Domain or User ID must be set!`);
     }
-    if (!args.name) {
-      throw new Error("Account name cannot be empty!");
-    }
 
     const request = new HttpRequest(
       this.createURL("/accounts/upsert"),
@@ -247,7 +244,6 @@ export class Client {
       }),
       JSON.stringify({
         identification: { accountId: args.accountId, domain: args.domain },
-        name: args.name,
         properties: args.properties
           ? this.stringifyProperties(args.properties)
           : undefined,
@@ -449,7 +445,6 @@ export interface UpsertUserArguments {
 export interface UpsertAccountArguments {
   accountId: string;
   domain: string;
-  name: string;
   properties?: Properties;
   memberIds?: string[];
 }

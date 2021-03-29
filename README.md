@@ -92,10 +92,6 @@ await client.upsertAccount({
   domain: "acme-inc.com",
   accountId: "accountId", // Unique identifier for the account in your database
 
-
-  // required
-  name: "ACME, inc",
-
   // optional
   properties: {
     total_amount_of_users: 53,
