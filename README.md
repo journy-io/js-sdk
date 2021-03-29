@@ -67,7 +67,7 @@ _Note: when sending an empty value (`""`) as value for a property, the property 
 
 ```ts
 await client.upsertUser({
-  // Either a userId or email is required
+  // Must provide either an email or userId or both
   email: "john@doe.tld",
   userId: "userId", // Unique identifier for the user in your database
 
@@ -88,9 +88,12 @@ _Note: when sending an empty value (`""`) as value for a property, the property 
 
 ```ts
 await client.upsertAccount({
-  // // Either an accountId or domain is required
-  accountId: "accountId", // Unique identifier for the account in your database
+  // Must provide either an domain or accountId or both
   domain: "acme-inc.com",
+  accountId: "accountId", // Unique identifier for the account in your database
+
+
+  // required
   name: "ACME, inc",
 
   // optional
