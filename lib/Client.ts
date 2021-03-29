@@ -153,8 +153,8 @@ export class Client {
       }),
       JSON.stringify({
         identification: {
-          userId: event.getUserId(),
-          accountId: event.getAccountId(),
+          user: { userId: event.getUserId() },
+          account: { accountId: event.getAccountId() },
         },
         name: event.getName(),
         triggeredAt: date ? date.toISOString() : undefined,
@@ -186,11 +186,8 @@ export class Client {
   }
 
   async upsertUser(args: UpsertUserArguments): Promise<Result<undefined>> {
-    if (!args.email) {
-      throw new Error(`Email cannot be empty!`);
-    }
-    if (!args.userId) {
-      throw new Error(`User ID cannot be empty!`);
+    if (!args.email && !args.userId) {
+      throw new Error(`Either an Email or User ID must be set!`);
     }
 
     const request = new HttpRequest(
@@ -201,8 +198,10 @@ export class Client {
         "Content-Type": "application/json",
       }),
       JSON.stringify({
-        email: args.email,
-        userId: args.userId,
+        identification: {
+          email: args.email,
+          userId: args.userId,
+        },
         properties: args.properties
           ? this.stringifyProperties(args.properties)
           : undefined,
@@ -232,8 +231,8 @@ export class Client {
   async upsertAccount(
     args: UpsertAccountArguments
   ): Promise<Result<undefined>> {
-    if (!args.accountId) {
-      throw new Error("Account ID cannot be empty!");
+    if (!args.domain && !args.accountId) {
+      throw new Error(`Either a Domain or User ID must be set!`);
     }
     if (!args.name) {
       throw new Error("Account name cannot be empty!");
@@ -247,7 +246,7 @@ export class Client {
         "Content-Type": "application/json",
       }),
       JSON.stringify({
-        accountId: args.accountId,
+        identification: { accountId: args.accountId, domain: args.domain },
         name: args.name,
         properties: args.properties
           ? this.stringifyProperties(args.properties)
@@ -279,11 +278,11 @@ export class Client {
   }
 
   async link(args: LinkArguments): Promise<Result<undefined>> {
+    if (!args.userId && !args.email) {
+      throw new Error(`Either an Email or User ID must be set!`);
+    }
     if (!args.deviceId) {
       throw new Error(`Device ID cannot be empty!`);
-    }
-    if (!args.userId) {
-      throw new Error(`User ID cannot be empty!`);
     }
 
     const request = new HttpRequest(
@@ -295,7 +294,7 @@ export class Client {
       }),
       JSON.stringify({
         deviceId: args.deviceId,
-        userId: args.userId,
+        identification: { userId: args.userId, email: args.email },
       })
     );
 
@@ -449,6 +448,7 @@ export interface UpsertUserArguments {
 
 export interface UpsertAccountArguments {
   accountId: string;
+  domain: string;
   name: string;
   properties?: Properties;
   memberIds?: string[];
@@ -457,6 +457,7 @@ export interface UpsertAccountArguments {
 export interface LinkArguments {
   deviceId: string;
   userId: string;
+  email: string;
 }
 
 export interface GetTrackingSnippetArguments {
