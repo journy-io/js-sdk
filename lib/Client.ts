@@ -250,8 +250,10 @@ export class Client {
         members: args.members
           ? args.members.map((member) => {
               return {
-                email: member.email,
-                userId: String(member.userId),
+                identification: {
+                  email: String(member.email),
+                  userId: String(member.userId),
+                },
               };
             })
           : undefined,

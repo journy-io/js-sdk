@@ -594,7 +594,9 @@ describe("Client", () => {
             likesDog: "true",
             firstDogName: "Journy",
           },
-          members: [{ email: "user1@user.com", userId: "userId" }],
+          members: [
+            { identification: { email: "user1@user.com", userId: "userId" } },
+          ],
         })
       );
 
