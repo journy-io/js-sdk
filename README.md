@@ -102,7 +102,10 @@ await client.upsertAccount({
   },
 
   // optional
-  members: ["userId", "userId"], // Unique identifier for the user in your database
+  members: [
+    { email: "john@doe.tld", userId: "userId" }, // userID: Unique identifier for the user in your database
+    { email: "jane@doe.tld", userId: "userId" }
+  ] 
 });
 ```
 

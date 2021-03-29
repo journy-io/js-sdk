@@ -247,8 +247,13 @@ export class Client {
         properties: args.properties
           ? this.stringifyProperties(args.properties)
           : undefined,
-        members: args.memberIds
-          ? args.memberIds.map((id) => String(id))
+        members: args.members
+          ? args.members.map((member) => {
+              return {
+                email: member.email,
+                userId: String(member.userId),
+              };
+            })
           : undefined,
       })
     );
@@ -446,7 +451,7 @@ export interface UpsertAccountArguments {
   accountId: string;
   domain: string;
   properties?: Properties;
-  memberIds?: string[];
+  members?: { email: string; userId: string }[];
 }
 
 export interface LinkArguments {

@@ -594,7 +594,7 @@ describe("Client", () => {
             likesDog: "true",
             firstDogName: "Journy",
           },
-          members: ["memberId", "memberId2"],
+          members: [{ email: "user1@user.com", userId: "userId" }],
         })
       );
 
@@ -608,7 +608,7 @@ describe("Client", () => {
           likesDog: "true",
           firstDogName: "Journy",
         },
-        memberIds: ["memberId", "memberId2"],
+        members: [{ email: "user1@user.com", userId: "userId" }],
       });
 
       expect(propertiesClient.getLastRequest()).toEqual(expectedRequest);
