@@ -461,8 +461,8 @@ export interface UpsertUserArguments {
 }
 
 export interface UpsertAccountArguments {
-  accountId: string | undefined;
-  domain: string | undefined;
+  accountId?: string;
+  domain?: string;
   properties?: Properties;
   members?: { email?: string; userId?: string }[];
 }
