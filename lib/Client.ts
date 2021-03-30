@@ -455,8 +455,8 @@ export interface ApiKeyDetails {
 }
 
 export interface UpsertUserArguments {
-  email: string | undefined;
-  userId: string | undefined;
+  email?: string;
+  userId?: string;
   properties?: Properties;
 }
 
@@ -464,13 +464,13 @@ export interface UpsertAccountArguments {
   accountId: string | undefined;
   domain: string | undefined;
   properties?: Properties;
-  members?: { email: string | undefined; userId: string | undefined }[];
+  members?: { email?: string; userId?: string }[];
 }
 
 export interface LinkArguments {
   deviceId: string;
-  userId: string | undefined;
-  email: string | undefined;
+  userId?: string;
+  email?: string;
 }
 
 export interface GetTrackingSnippetArguments {
