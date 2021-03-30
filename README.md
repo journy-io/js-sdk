@@ -132,9 +132,7 @@ if (request.cookies["__journey"]) {
 #### Add event
 
 ```ts
-import { AccountIdentified } from "./AccountIdentified";
-import { Event } from "./Client";
-import { UserIdentified } from "./UserIdentified";
+import { Event, UserIdentified, AccountIdentified } from "@journyio/sdk";
 
 event = Event.forUser("login", UserIdentified.byUserId("userId"));
 
