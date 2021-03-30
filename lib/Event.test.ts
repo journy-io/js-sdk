@@ -1,11 +1,19 @@
+import { AccountIdentified } from "./AccountIdentified";
 import { Event } from "./Event";
+import { UserIdentified } from "./UserIdentified";
 
 describe("Event", () => {
   test("forUserInAccount", () => {
-    const event = Event.forUserInAccount("name", "userId", "accountId");
+    const event = Event.forUserInAccount(
+      "name",
+      UserIdentified.byUserId("userId"),
+      AccountIdentified.byAccountId("accountId")
+    );
     expect(event.getName()).toEqual("name");
-    expect(event.getAccountId()).toEqual("accountId");
-    expect(event.getUserId()).toEqual("userId");
+    expect(event.getAccount()).toEqual(
+      new AccountIdentified("accountId", undefined)
+    );
+    expect(event.getUser()).toEqual(new UserIdentified("userId", undefined));
     expect(event.getDate()).toBeUndefined();
     expect(
       event.happenedAt(new Date("2019-01-01T00:00:00.000Z")).getDate()
@@ -13,10 +21,15 @@ describe("Event", () => {
   });
 
   test("forAccount", () => {
-    const event = Event.forAccount("name", "accountId");
+    const event = Event.forAccount(
+      "name",
+      AccountIdentified.byAccountId("accountId")
+    );
     expect(event.getName()).toEqual("name");
-    expect(event.getAccountId()).toEqual("accountId");
-    expect(event.getUserId()).toBeUndefined();
+    expect(event.getAccount()).toEqual(
+      new AccountIdentified("accountId", undefined)
+    );
+    expect(event.getUser()).toBeUndefined();
     expect(event.getDate()).toBeUndefined();
     expect(
       event.happenedAt(new Date("2019-01-01T00:00:00.000Z")).getDate()
@@ -24,10 +37,10 @@ describe("Event", () => {
   });
 
   test("forUser", () => {
-    const event = Event.forUser("name", "userId");
+    const event = Event.forUser("name", UserIdentified.byUserId("userId"));
     expect(event.getName()).toEqual("name");
-    expect(event.getAccountId()).toBeUndefined();
-    expect(event.getUserId()).toEqual("userId");
+    expect(event.getAccount()).toBeUndefined();
+    expect(event.getUser()).toEqual(new UserIdentified("userId", undefined));
     expect(event.getDate()).toBeUndefined();
     expect(
       event.happenedAt(new Date("2019-01-01T00:00:00.000Z")).getDate()
@@ -35,20 +48,8 @@ describe("Event", () => {
   });
 
   test("throws", () => {
-    expect(() => Event.forUser("", "userId")).toThrowError(
-      "Event name cannot be empty!"
-    );
-    expect(() => Event.forUser("name", "")).toThrowError(
-      "User ID cannot be empty!"
-    );
-    expect(() => Event.forAccount("name", "")).toThrowError(
-      "Account ID cannot be empty!"
-    );
-    expect(() => Event.forUserInAccount("name", "", "")).toThrowError(
-      "User ID cannot be empty!"
-    );
-    expect(() => Event.forUserInAccount("name", "userId", "")).toThrowError(
-      "Account ID cannot be empty!"
-    );
+    expect(() =>
+      Event.forUser("", UserIdentified.byUserId("userId"))
+    ).toThrowError("Event name cannot be empty!");
   });
 });
