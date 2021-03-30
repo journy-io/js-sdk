@@ -67,14 +67,16 @@ _Note: when sending an empty value (`""`) as value for a property, the property 
 
 ```ts
 await client.upsertUser({
-  // required
+  // Must provide either an email or userId or both
   userId: "userId", // Unique identifier for the user in your database
-  email: "name@domain.tld",
+  email: "john@doe.tld",
 
   // optional
   properties: {
+    full_name: "John Doe",
+    first_name: "John",
+    last_name: "Doe",
     age: 26,
-    name: "John Doe",
     is_developer: true,
     registered_at: new Date(/* ... */),
     this_property_will_be_deleted: "",
@@ -88,33 +90,39 @@ _Note: when sending an empty value (`""`) as value for a property, the property 
 
 ```ts
 await client.upsertAccount({
-  // required
+  // Must provide either an domain or accountId or both
   accountId: "accountId", // Unique identifier for the account in your database
-  name: "journy.io",
+  domain: "acme-inc.com",
 
   // optional
   properties: {
-    age: 26,
-    name: "John Doe",
-    is_developer: true,
+    name: "ACME, Inc",
+    total_amount_of_users: 53,
+    is_paying_account: true,
     registered_at: new Date(/* ... */),
     this_property_will_be_deleted: "",
   },
 
   // optional
-  members: ["userId", "userId"], // Unique identifier for the user in your database
+  members: [
+    { userId: "userId" }, // userID: Unique identifier for the user in your database
+    { userId: "userId" }
+  ]
 });
 ```
 
-#### Link web visitor to an app user
+#### Link web activity to a user
 
-You can link a web visitor to a user in your application when you have our snippet installed on your website. The snippet sets a cookie named `__journey`. If the cookie exists, you can link the web visitor to the user that is currently logged in:
+You can link web activity to a user in your application when you have our snippet installed on your website. The snippet sets a cookie named `__journey`. If the cookie exists, you can link the web activity to the user that is currently logged in:
 
 ```ts
 if (request.cookies["__journey"]) {
   const result = await client.link({
     deviceId: request.cookies["__journey"],
+
     userId: request.user.id, // Unique identifier for the user in your database
+    // or
+    email: request.user.email,
   });
 }
 ```
@@ -124,16 +132,29 @@ if (request.cookies["__journey"]) {
 #### Add event
 
 ```ts
+import { AccountIdentified } from "./AccountIdentified";
 import { Event } from "./Client";
+import { UserIdentified } from "./UserIdentified";
 
-event = Event.forUser("login", "userId");
-event = Event.forUser("some_historic_event", "userId").happenedAt(new Date(...));
-event = Event.forAccount("reached_monthly_volume", "accountId").withMetadata({
-  "number": 1313,
-  "string": "string",
-  "boolean": true,
-});
-event = Event.forUserInAccount("updated_settings", "userId", "accountId");
+event = Event.forUser("login", UserIdentified.byUserId("userId"));
+
+event = Event.forUser("some_historic_event", UserIdentified.byUserId("userId"))
+  .happenedAt(new Date(...))
+;
+
+event = Event.forAccount("reached_monthly_volume", AccountIdentified.byAccountId("accountId"))
+  .withMetadata({
+    "number": 1313,
+    "string": "string",
+    "boolean": true,
+  })
+;
+
+event = Event.forUserInAccount(
+  "updated_settings",
+  UserIdentified.byUserId("userId"),
+  AccountIdentified.byAccountId("accountId")
+);
 
 await client.addEvent(event);
 ```

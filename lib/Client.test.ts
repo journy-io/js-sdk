@@ -1,4 +1,5 @@
 /* eslint-disable security/detect-non-literal-fs-filename */
+import { AccountIdentified } from "./AccountIdentified";
 import { Event } from "./Event";
 import { APIError, Client, Config } from "./Client";
 import {
@@ -9,6 +10,7 @@ import {
   HttpResponse,
 } from "@journyio/http";
 import { URL } from "url";
+import { UserIdentified } from "./UserIdentified";
 
 class HttpClientThatThrows implements HttpClient {
   async send(request: HttpRequest): Promise<HttpResponse> {
@@ -232,7 +234,11 @@ describe("Client", () => {
 
       const client = new Client(eventClient, clientConfig);
       const response = await client.addEvent(
-        Event.forUserInAccount("tag", "test@journy.io", "accountId")
+        Event.forUserInAccount(
+          "tag",
+          UserIdentified.byEmail("test@journy.io"),
+          AccountIdentified.byAccountId("accountId")
+        )
       );
 
       expect(response).toBeDefined();
@@ -254,8 +260,8 @@ describe("Client", () => {
         }),
         JSON.stringify({
           identification: {
-            userId: "test@journy.io",
-            accountId: "accountId",
+            user: { email: "test@journy.io" },
+            account: { accountId: "accountId" },
           },
           name: "tag",
         })
@@ -263,7 +269,11 @@ describe("Client", () => {
 
       const client = new Client(eventClient, clientConfig);
       const response = await client.addEvent(
-        Event.forUserInAccount("tag", "test@journy.io", "accountId")
+        Event.forUserInAccount(
+          "tag",
+          UserIdentified.byEmail("test@journy.io"),
+          AccountIdentified.byAccountId("accountId")
+        )
       );
 
       expect(eventClient.getLastRequest()).toEqual(expectedRequest);
@@ -284,8 +294,8 @@ describe("Client", () => {
         }),
         JSON.stringify({
           identification: {
-            userId: "userId",
-            accountId: "accountId",
+            user: { userId: "userId" },
+            account: { accountId: "accountId" },
           },
           name: "event",
           triggeredAt: date.toISOString(),
@@ -299,7 +309,11 @@ describe("Client", () => {
 
       const client = new Client(eventClient, clientConfig);
       const response = await client.addEvent(
-        Event.forUserInAccount("event", "userId", "accountId")
+        Event.forUserInAccount(
+          "event",
+          UserIdentified.byUserId("userId"),
+          AccountIdentified.byAccountId("accountId")
+        )
           .happenedAt(date)
           .withMetadata({ number: 1, boolean: true, string: "string" })
       );
@@ -321,7 +335,7 @@ describe("Client", () => {
         }),
         JSON.stringify({
           identification: {
-            userId: "test@journy.io",
+            user: { email: "test@journy.io" },
           },
           name: "tag",
           triggeredAt: "2019-01-01T00:00:00.000Z",
@@ -330,9 +344,10 @@ describe("Client", () => {
 
       const client = new Client(eventClient, clientConfig);
       const response = await client.addEvent(
-        Event.forUser("tag", "test@journy.io").happenedAt(
-          new Date("2019-01-01T00:00:00.000Z")
-        )
+        Event.forUser(
+          "tag",
+          UserIdentified.byEmail("test@journy.io")
+        ).happenedAt(new Date("2019-01-01T00:00:00.000Z"))
       );
 
       expect(eventClient.getLastRequest()).toEqual(expectedRequest);
@@ -352,7 +367,7 @@ describe("Client", () => {
         }),
         JSON.stringify({
           identification: {
-            userId: "test@journy.io",
+            user: { email: "test@journy.io" },
           },
           name: "tag",
         })
@@ -360,7 +375,7 @@ describe("Client", () => {
 
       const client = new Client(eventClient, clientConfig);
       const response1 = await client.addEvent(
-        Event.forUser("tag", "test@journy.io")
+        Event.forUser("tag", UserIdentified.byEmail("test@journy.io"))
       );
 
       expect(eventClient.getLastRequest()).toEqual(expectedRequest);
@@ -384,14 +399,16 @@ describe("Client", () => {
         }),
         JSON.stringify({
           identification: {
-            userId: "userId",
+            user: { userId: "userId" },
           },
           name: "tag",
         })
       );
 
       const client = new Client(eventClient, clientConfig);
-      const response1 = await client.addEvent(Event.forUser("tag", "userId"));
+      const response1 = await client.addEvent(
+        Event.forUser("tag", UserIdentified.byUserId("userId"))
+      );
 
       expect(eventClient.getLastRequest()).toEqual(expectedRequest);
       expect(response1).toBeDefined();
@@ -438,8 +455,7 @@ describe("Client", () => {
           "content-type": "application/json",
         }),
         JSON.stringify({
-          email: "test@journy.io",
-          userId: "userId",
+          identification: { userId: "userId", email: "test@journy.io" },
           properties: {
             hasDogs: "2",
             boughtDog: "2020-08-27T12:08:21.000Z",
@@ -477,8 +493,10 @@ describe("Client", () => {
           "content-type": "application/json",
         }),
         JSON.stringify({
-          email: "test@journy.io",
-          userId: "invalid",
+          identification: {
+            userId: "invalid",
+            email: "test@journy.io",
+          },
         })
       );
 
@@ -504,16 +522,10 @@ describe("Client", () => {
       const client = new Client(propertiesClient, clientConfig);
       await expect(
         client.upsertUser({
-          email: "test@journy.io",
+          email: "",
           userId: "",
         })
-      ).rejects.toThrow("User ID cannot be empty!");
-      await expect(
-        client.upsertUser({
-          email: "",
-          userId: "userId",
-        })
-      ).rejects.toThrow("Email cannot be empty!");
+      ).rejects.toThrow("User ID or email needs to set!");
     });
   });
 
@@ -524,7 +536,7 @@ describe("Client", () => {
       const client = new Client(propertiesClient, clientConfig);
       const response = await client.upsertAccount({
         accountId: "accountId",
-        name: "accountName",
+        domain: "your-domain.com",
         properties: {
           hasDogs: 2,
           boughtDog: new Date("2020-08-27T12:08:21+00:00"),
@@ -551,8 +563,7 @@ describe("Client", () => {
           "content-type": "application/json",
         }),
         JSON.stringify({
-          accountId: "accountId",
-          name: "accountName",
+          identification: { accountId: "accountId", domain: "your-domain.com" },
           properties: {
             hasDogs: "2",
             boughtDog: "2020-08-27T12:08:21.000Z",
@@ -565,7 +576,7 @@ describe("Client", () => {
       const client = new Client(propertiesClient, clientConfig);
       const response = await client.upsertAccount({
         accountId: "accountId",
-        name: "accountName",
+        domain: "your-domain.com",
         properties: {
           hasDogs: "2",
           boughtDog: new Date("2020-08-27T12:08:21+00:00"),
@@ -590,29 +601,30 @@ describe("Client", () => {
           "content-type": "application/json",
         }),
         JSON.stringify({
-          accountId: "accountId",
-          name: "accountName",
+          identification: { accountId: "accountId", domain: "your-domain.com" },
           properties: {
             hasDogs: "2",
             boughtDog: "2020-08-27T12:08:21.000Z",
             likesDog: "true",
             firstDogName: "Journy",
           },
-          members: ["memberId", "memberId2"],
+          members: [
+            { identification: { userId: "userId", email: "user1@user.com" } },
+          ],
         })
       );
 
       const client = new Client(propertiesClient, clientConfig);
       const response = await client.upsertAccount({
         accountId: "accountId",
-        name: "accountName",
+        domain: "your-domain.com",
         properties: {
           hasDogs: "2",
           boughtDog: new Date("2020-08-27T12:08:21+00:00"),
           likesDog: "true",
           firstDogName: "Journy",
         },
-        memberIds: ["memberId", "memberId2"],
+        members: [{ email: "user1@user.com", userId: "userId" }],
       });
 
       expect(propertiesClient.getLastRequest()).toEqual(expectedRequest);
@@ -631,8 +643,7 @@ describe("Client", () => {
           "content-type": "application/json",
         }),
         JSON.stringify({
-          accountId: "accountId",
-          name: "journy.io",
+          identification: { accountId: "accountId", domain: "your-domain.com" },
           properties: {
             hasDogs: "2",
             boughtDog: "2020-08-27T12:08:21.000Z",
@@ -645,7 +656,7 @@ describe("Client", () => {
       const client = new Client(propertiesClient, clientConfig);
       const response1 = await client.upsertAccount({
         accountId: "accountId",
-        name: "journy.io",
+        domain: "your-domain.com",
         properties: {
           hasDogs: 2,
           boughtDog: new Date("2020-08-27T12:08:21+00:00"),
@@ -670,16 +681,10 @@ describe("Client", () => {
       const client = new Client(propertiesClient, clientConfig);
       await expect(
         client.upsertAccount({
-          name: "name",
           accountId: "",
+          domain: "",
         })
-      ).rejects.toThrow("Account ID cannot be empty!");
-      await expect(
-        client.upsertAccount({
-          name: "",
-          accountId: "accountId",
-        })
-      ).rejects.toThrow("Account name cannot be empty!");
+      ).rejects.toThrow("Account ID or domain needs to set!");
     });
   });
 
@@ -691,6 +696,7 @@ describe("Client", () => {
       const response = await client.link({
         deviceId: "deviceId",
         userId: "userId",
+        email: "email",
       });
 
       expect(response).toBeDefined();
@@ -712,7 +718,7 @@ describe("Client", () => {
         }),
         JSON.stringify({
           deviceId: "deviceId",
-          userId: "userId",
+          identification: { userId: "userId", email: "email" },
         })
       );
 
@@ -720,6 +726,7 @@ describe("Client", () => {
       const response = await client.link({
         deviceId: "deviceId",
         userId: "userId",
+        email: "email",
       });
 
       expect(propertiesClient.getLastRequest()).toEqual(expectedRequest);
@@ -739,7 +746,7 @@ describe("Client", () => {
         }),
         JSON.stringify({
           deviceId: "invalid",
-          userId: "userId",
+          identification: { userId: "userId", email: "email" },
         })
       );
 
@@ -747,6 +754,7 @@ describe("Client", () => {
       const response = await client.link({
         deviceId: "invalid",
         userId: "userId",
+        email: "email",
       });
 
       expect(propertiesClient.getLastRequest()).toEqual(expectedRequest);
@@ -766,12 +774,14 @@ describe("Client", () => {
         client.link({
           deviceId: "name",
           userId: "",
+          email: "",
         })
-      ).rejects.toThrow("User ID cannot be empty!");
+      ).rejects.toThrow("User ID or email needs to set!");
       await expect(
         client.link({
           deviceId: "",
           userId: "userId",
+          email: "email",
         })
       ).rejects.toThrow("Device ID cannot be empty!");
     });

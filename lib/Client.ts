@@ -6,7 +6,9 @@ import {
   HttpResponse,
 } from "@journyio/http";
 import { URL } from "url";
+import { AccountIdentified } from "./AccountIdentified";
 import { Event, Metadata } from "./Event";
+import { UserIdentified } from "./UserIdentified";
 
 export interface Config {
   apiKey: string;
@@ -144,6 +146,13 @@ export class Client {
 
   async addEvent(event: Event): Promise<Result<undefined>> {
     const date = event.getDate();
+    const user = event.getUser();
+    const account = event.getAccount();
+
+    if (!user && !account) {
+      throw new Error("User or account needs to set!");
+    }
+
     const request = new HttpRequest(
       this.createURL("/events"),
       "POST",
@@ -153,8 +162,8 @@ export class Client {
       }),
       JSON.stringify({
         identification: {
-          userId: event.getUserId(),
-          accountId: event.getAccountId(),
+          user: user ? this.getUserIdentification(user) : undefined,
+          account: account ? this.getAccountIdentification(account) : undefined,
         },
         name: event.getName(),
         triggeredAt: date ? date.toISOString() : undefined,
@@ -186,13 +195,7 @@ export class Client {
   }
 
   async upsertUser(args: UpsertUserArguments): Promise<Result<undefined>> {
-    if (!args.email) {
-      throw new Error(`Email cannot be empty!`);
-    }
-    if (!args.userId) {
-      throw new Error(`User ID cannot be empty!`);
-    }
-
+    const identification = new UserIdentified(args.userId, args.email);
     const request = new HttpRequest(
       this.createURL("/users/upsert"),
       "POST",
@@ -201,8 +204,7 @@ export class Client {
         "Content-Type": "application/json",
       }),
       JSON.stringify({
-        email: args.email,
-        userId: args.userId,
+        identification: this.getUserIdentification(identification),
         properties: args.properties
           ? this.stringifyProperties(args.properties)
           : undefined,
@@ -229,16 +231,24 @@ export class Client {
     }
   }
 
+  private getUserIdentification(user: UserIdentified) {
+    return {
+      userId: user.getUserId(),
+      email: user.getEmail(),
+    };
+  }
+
+  private getAccountIdentification(account: AccountIdentified) {
+    return {
+      accountId: account.getAccountId(),
+      domain: account.getDomain(),
+    };
+  }
+
   async upsertAccount(
     args: UpsertAccountArguments
   ): Promise<Result<undefined>> {
-    if (!args.accountId) {
-      throw new Error("Account ID cannot be empty!");
-    }
-    if (!args.name) {
-      throw new Error("Account name cannot be empty!");
-    }
-
+    const identification = new AccountIdentified(args.accountId, args.domain);
     const request = new HttpRequest(
       this.createURL("/accounts/upsert"),
       "POST",
@@ -247,13 +257,18 @@ export class Client {
         "Content-Type": "application/json",
       }),
       JSON.stringify({
-        accountId: args.accountId,
-        name: args.name,
+        identification: this.getAccountIdentification(identification),
         properties: args.properties
           ? this.stringifyProperties(args.properties)
           : undefined,
-        members: args.memberIds
-          ? args.memberIds.map((id) => String(id))
+        members: args.members
+          ? args.members.map((member) => {
+              const user = new UserIdentified(member.userId, member.email);
+
+              return {
+                identification: this.getUserIdentification(user),
+              };
+            })
           : undefined,
       })
     );
@@ -282,10 +297,8 @@ export class Client {
     if (!args.deviceId) {
       throw new Error(`Device ID cannot be empty!`);
     }
-    if (!args.userId) {
-      throw new Error(`User ID cannot be empty!`);
-    }
 
+    const identification = new UserIdentified(args.userId, args.email);
     const request = new HttpRequest(
       this.createURL(`/link`),
       "POST",
@@ -295,7 +308,7 @@ export class Client {
       }),
       JSON.stringify({
         deviceId: args.deviceId,
-        userId: args.userId,
+        identification: this.getUserIdentification(identification),
       })
     );
 
@@ -442,21 +455,22 @@ export interface ApiKeyDetails {
 }
 
 export interface UpsertUserArguments {
-  email: string;
-  userId: string;
+  email: string | undefined;
+  userId: string | undefined;
   properties?: Properties;
 }
 
 export interface UpsertAccountArguments {
-  accountId: string;
-  name: string;
+  accountId: string | undefined;
+  domain: string | undefined;
   properties?: Properties;
-  memberIds?: string[];
+  members?: { email: string | undefined; userId: string | undefined }[];
 }
 
 export interface LinkArguments {
   deviceId: string;
-  userId: string;
+  userId: string | undefined;
+  email: string | undefined;
 }
 
 export interface GetTrackingSnippetArguments {
