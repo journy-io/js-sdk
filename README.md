@@ -57,7 +57,7 @@ const result = await client.getApiKeyDetails();
 
 if (result.success) {
   console.log(result.data.permissions); // string[]
-  console.log(result.data.callsRemaining); // number
+  console.log(result.callsRemaining); // number
 }
 ```
 
