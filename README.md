@@ -63,7 +63,7 @@ if (result.success) {
 
 #### Create or update user
 
-_Note: when sending an empty value (`""`) as value for a property, the property will be deleted._
+Note: `full_name`, `first_name`, `last_name`, `phone` and `registered_at` are default properties
 
 ```ts
 await client.upsertUser({
@@ -76,17 +76,16 @@ await client.upsertUser({
     full_name: "John Doe",
     first_name: "John",
     last_name: "Doe",
-    age: 26,
-    is_developer: true,
+    phone: "123",
     registered_at: new Date(/* ... */),
-    this_property_will_be_deleted: "",
+    is_admin: true,
   },
 });
 ```
 
 #### Create or update account
 
-_Note: when sending an empty value (`""`) as value for a property, the property will be deleted._
+Note: `name`, `mrr`, `plan` and `registered_at` are default properties
 
 ```ts
 await client.upsertAccount({
@@ -97,10 +96,10 @@ await client.upsertAccount({
   // optional
   properties: {
     name: "ACME, Inc",
-    total_amount_of_users: 53,
-    is_paying_account: true,
+    mrr: 399,
+    plan: "Pro",
     registered_at: new Date(/* ... */),
-    this_property_will_be_deleted: "",
+    is_paying: true,
   },
 
   // optional
