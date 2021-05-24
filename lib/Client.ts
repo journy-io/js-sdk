@@ -102,7 +102,7 @@ export class Client {
 
   // noinspection JSMethodCanBeStatic
   private stringifyProperties(properties: Properties) {
-    const formatted: { [name: string]: string } = {};
+    const formatted: { [name: string]: string | string[] } = {};
     for (const name of Object.keys(properties)) {
       const value = properties[name];
 
@@ -116,6 +116,10 @@ export class Client {
 
       if (value instanceof Date) {
         formatted[name] = value.toISOString();
+      }
+
+      if (Array.isArray(value)) {
+        formatted[name] = value.map((el: string) => el.toString());
       }
     }
 
@@ -432,7 +436,9 @@ function statusCodeToError(status: number): APIError {
   }
 }
 
-export type Properties = { [key: string]: string | number | boolean | Date };
+export type Properties = {
+  [key: string]: string | number | boolean | Date | null | string[];
+};
 
 export type Result<T> = Success<T> | Error;
 
