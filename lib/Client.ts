@@ -407,6 +407,7 @@ export class Client {
 }
 
 export enum APIError {
+  Forbidden = "Forbidden",
   ServerError = "ServerError",
   UnauthorizedError = "UnauthorizedError",
   BadArgumentsError = "BadArgumentsError",
@@ -423,6 +424,8 @@ function statusCodeToError(status: number): APIError {
       return APIError.BadArgumentsError;
     case 429:
       return APIError.TooManyRequests;
+    case 403:
+      return APIError.Forbidden;
     case 404:
       return APIError.NotFoundError;
     case 500:
