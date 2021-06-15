@@ -414,20 +414,23 @@ export enum APIError {
   TooManyRequests = "TooManyRequests",
   NotFoundError = "NotFoundError",
   UnknownError = "UnknownError",
+  Unprocessable = "Unprocessable",
 }
 
 function statusCodeToError(status: number): APIError {
   switch (status) {
-    case 401:
-      return APIError.UnauthorizedError;
     case 400:
       return APIError.BadArgumentsError;
-    case 429:
-      return APIError.TooManyRequests;
+    case 401:
+      return APIError.UnauthorizedError;
     case 403:
       return APIError.Forbidden;
     case 404:
       return APIError.NotFoundError;
+    case 422:
+      return APIError.Unprocessable;
+    case 429:
+      return APIError.TooManyRequests;
     case 500:
       return APIError.ServerError;
     default:
