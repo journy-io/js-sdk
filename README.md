@@ -78,9 +78,10 @@ await client.upsertUser({
     last_name: "Doe",
     phone: "123",
     registered_at: new Date(/* ... */),
-    member_of: ["a", "b"],
-    email: null, // this property will be deleted
     is_admin: true,
+    array_of_values: ["value1", "value2"],
+    key_with_empty_value: "",
+    this_property_will_be_deleted: null,
   },
 });
 ```
@@ -101,9 +102,10 @@ await client.upsertAccount({
     mrr: 399,
     plan: "Pro",
     registered_at: new Date(/* ... */),
-    member_of: ["a", "b"],
-    logo_url: null, // this property will be deleted
     is_paying: true,
+    array_of_values: ["value1", "value2"],
+    key_with_empty_value: "",
+    this_property_will_be_deleted: null,
   },
 
   // optional
