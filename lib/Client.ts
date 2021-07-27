@@ -297,6 +297,80 @@ export class Client {
     }
   }
 
+  async addUserToAccount(
+    args: AddUserToAccountArguments
+  ): Promise<Result<undefined>> {
+    const request = new HttpRequest(
+      this.createURL("/accounts/users"),
+      "POST",
+      new HttpHeaders({
+        ...this.getHeaders().toObject(),
+        "Content-Type": "application/json",
+      }),
+      JSON.stringify({
+        account: this.getAccountIdentification(args.account),
+        user: this.getUserIdentification(args.user),
+        operation: "add",
+      })
+    );
+
+    try {
+      const response = await this.httpClient.send(request);
+
+      if (response.getStatusCode() < 200 || response.getStatusCode() >= 300) {
+        return this.handleError(response);
+      }
+
+      const remaining = Client.parseCallsRemaining(response);
+
+      return {
+        success: true,
+        requestId: JSON.parse(response.getBody()).meta.requestId,
+        callsRemaining: remaining !== undefined ? parseInt(remaining, 10) : 0,
+        data: undefined,
+      };
+    } catch (error) {
+      return this.handleError(error);
+    }
+  }
+
+  async removeUserToAccount(
+    args: RemoveUserToAccountArguments
+  ): Promise<Result<undefined>> {
+    const request = new HttpRequest(
+      this.createURL("/accounts/users"),
+      "POST",
+      new HttpHeaders({
+        ...this.getHeaders().toObject(),
+        "Content-Type": "application/json",
+      }),
+      JSON.stringify({
+        account: this.getAccountIdentification(args.account),
+        user: this.getUserIdentification(args.user),
+        operation: "remove",
+      })
+    );
+
+    try {
+      const response = await this.httpClient.send(request);
+
+      if (response.getStatusCode() < 200 || response.getStatusCode() >= 300) {
+        return this.handleError(response);
+      }
+
+      const remaining = Client.parseCallsRemaining(response);
+
+      return {
+        success: true,
+        requestId: JSON.parse(response.getBody()).meta.requestId,
+        callsRemaining: remaining !== undefined ? parseInt(remaining, 10) : 0,
+        data: undefined,
+      };
+    } catch (error) {
+      return this.handleError(error);
+    }
+  }
+
   async link(args: LinkArguments): Promise<Result<undefined>> {
     if (!args.deviceId) {
       throw new Error(`Device ID cannot be empty!`);

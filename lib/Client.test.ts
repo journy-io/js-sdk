@@ -690,6 +690,164 @@ describe("Client", () => {
     });
   });
 
+  describe("addUserToAccount", () => {
+    it("correctly handles errors being thrown", async () => {
+      const propertiesClient = new HttpClientThatThrows();
+
+      const client = new Client(propertiesClient, clientConfig);
+      const response = await client.addUserToAccount({
+        account: AccountIdentified.byAccountId("aId"),
+        user: UserIdentified.byUserId("uId"),
+      });
+
+      expect(response).toBeDefined();
+      expect(response.success).toBeFalsy();
+      expect(response.callsRemaining).toEqual(undefined);
+      if (!response.success) {
+        expect(response.error).toEqual(APIError.UnknownError);
+      }
+    });
+
+    it("correctly adds users to accounts", async () => {
+      const propertiesClient = new HttpClientFixed(createdResponse);
+      const expectedRequest = new HttpRequest(
+        new URL("https://api.test.com/accounts/users"),
+        "POST",
+        new HttpHeaders({
+          "x-api-key": "key-secret",
+          "content-type": "application/json",
+        }),
+        JSON.stringify({
+          account: { accountId: "aId" },
+          user: { userId: "uId" },
+          operation: "add",
+        })
+      );
+
+      const client = new Client(propertiesClient, clientConfig);
+      const response = await client.addUserToAccount({
+        account: AccountIdentified.byAccountId("aId"),
+        user: UserIdentified.byUserId("uId"),
+      });
+
+      expect(propertiesClient.getLastRequest()).toEqual(expectedRequest);
+      expect(response).toBeDefined();
+      expect(response.success).toBeTruthy();
+      expect(response.callsRemaining).toEqual(5000);
+    });
+
+    it("correctly shows when the input parameters are invalid", async () => {
+      const propertiesClient = new HttpClientFixed(badRequestResponse);
+      const expectedRequest = new HttpRequest(
+        new URL("https://api.test.com/accounts/users"),
+        "POST",
+        new HttpHeaders({
+          "x-api-key": "key-secret",
+          "content-type": "application/json",
+        }),
+        JSON.stringify({
+          account: { accountId: "aId" },
+          user: { userId: "uId" },
+          operation: "add",
+        })
+      );
+
+      const client = new Client(propertiesClient, clientConfig);
+      const response = await client.addUserToAccount({
+        account: AccountIdentified.byAccountId("aId"),
+        user: UserIdentified.byUserId("uId"),
+      });
+
+      expect(propertiesClient.getLastRequest()).toEqual(expectedRequest);
+      expect(response).toBeDefined();
+      expect(response.success).toBeFalsy();
+      expect(response.callsRemaining).toEqual(5000);
+      if (!response.success) {
+        expect(response.error).toBeDefined();
+        expect(response.error).toEqual(APIError.BadArgumentsError);
+      }
+    });
+  });
+
+  describe("removeUserToAccount", () => {
+    it("correctly handles errors being thrown", async () => {
+      const propertiesClient = new HttpClientThatThrows();
+
+      const client = new Client(propertiesClient, clientConfig);
+      const response = await client.removeUserToAccount({
+        account: AccountIdentified.byAccountId("aId"),
+        user: UserIdentified.byUserId("uId"),
+      });
+
+      expect(response).toBeDefined();
+      expect(response.success).toBeFalsy();
+      expect(response.callsRemaining).toEqual(undefined);
+      if (!response.success) {
+        expect(response.error).toEqual(APIError.UnknownError);
+      }
+    });
+
+    it("correctly removes users to accounts", async () => {
+      const propertiesClient = new HttpClientFixed(createdResponse);
+      const expectedRequest = new HttpRequest(
+        new URL("https://api.test.com/accounts/users"),
+        "POST",
+        new HttpHeaders({
+          "x-api-key": "key-secret",
+          "content-type": "application/json",
+        }),
+        JSON.stringify({
+          account: { accountId: "aId" },
+          user: { userId: "uId" },
+          operation: "remove",
+        })
+      );
+
+      const client = new Client(propertiesClient, clientConfig);
+      const response = await client.removeUserToAccount({
+        account: AccountIdentified.byAccountId("aId"),
+        user: UserIdentified.byUserId("uId"),
+      });
+
+      expect(propertiesClient.getLastRequest()).toEqual(expectedRequest);
+      expect(response).toBeDefined();
+      expect(response.success).toBeTruthy();
+      expect(response.callsRemaining).toEqual(5000);
+    });
+
+    it("correctly shows when the input parameters are invalid", async () => {
+      const propertiesClient = new HttpClientFixed(badRequestResponse);
+      const expectedRequest = new HttpRequest(
+        new URL("https://api.test.com/accounts/users"),
+        "POST",
+        new HttpHeaders({
+          "x-api-key": "key-secret",
+          "content-type": "application/json",
+        }),
+        JSON.stringify({
+          account: { accountId: "aId" },
+          user: { userId: "uId" },
+          operation: "remove",
+        })
+      );
+
+      const client = new Client(propertiesClient, clientConfig);
+      const response = await client.removeUserToAccount({
+        account: AccountIdentified.byAccountId("aId"),
+        user: UserIdentified.byUserId("uId"),
+      });
+
+      expect(propertiesClient.getLastRequest()).toEqual(expectedRequest);
+      expect(response).toBeDefined();
+      expect(response.success).toBeFalsy();
+      expect(response.callsRemaining).toEqual(5000);
+      if (!response.success) {
+        expect(response.error).toBeDefined();
+        expect(response.error).toEqual(APIError.BadArgumentsError);
+      }
+    });
+  });
+
   describe("link", () => {
     it("correctly handles errors being thrown", async () => {
       const propertiesClient = new HttpClientThatThrows();
