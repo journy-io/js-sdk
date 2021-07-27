@@ -473,6 +473,14 @@ export interface UpsertAccountArguments {
   members?: { email?: string; userId?: string }[];
 }
 
+interface UserToAccountArguments {
+  user: UserIdentified;
+  account: AccountIdentified;
+}
+
+export type AddUserToAccountArguments = UserToAccountArguments;
+export type RemoveUserToAccountArguments = AddUserToAccountArguments;
+
 export interface LinkArguments {
   deviceId: string;
   userId?: string;

@@ -13,6 +13,8 @@ export {
   TrackingSnippetResponse,
   UpsertAccountArguments,
   UpsertUserArguments,
+  AddUserToAccountArguments,
+  RemoveUserToAccountArguments,
 } from "./Client";
 export { Event, Metadata } from "./Event";
 export { UserIdentified } from "./UserIdentified";
