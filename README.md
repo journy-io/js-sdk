@@ -79,6 +79,9 @@ await client.upsertUser({
     phone: "123",
     registered_at: new Date(/* ... */),
     is_admin: true,
+    array_of_values: ["value1", "value2"],
+    key_with_empty_value: "",
+    this_property_will_be_deleted: null,
   },
 });
 ```
@@ -100,6 +103,9 @@ await client.upsertAccount({
     plan: "Pro",
     registered_at: new Date(/* ... */),
     is_paying: true,
+    array_of_values: ["value1", "value2"],
+    key_with_empty_value: "",
+    this_property_will_be_deleted: null,
   },
 
   // optional

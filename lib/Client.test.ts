@@ -460,6 +460,7 @@ describe("Client", () => {
             hasDogs: "2",
             boughtDog: "2020-08-27T12:08:21.000Z",
             likesDog: "true",
+            listValues: ["value1", "value2"],
             firstDogName: "Journy",
           },
         })
@@ -473,6 +474,7 @@ describe("Client", () => {
           hasDogs: 2,
           boughtDog: new Date("2020-08-27T12:08:21+00:00"),
           likesDog: true,
+          listValues: ["value1", "value2"],
           firstDogName: "Journy",
         },
       });
