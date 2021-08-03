@@ -610,9 +610,6 @@ describe("Client", () => {
             likesDog: "true",
             firstDogName: "Journy",
           },
-          members: [
-            { identification: { userId: "userId", email: "user1@user.com" } },
-          ],
         })
       );
 
@@ -626,7 +623,6 @@ describe("Client", () => {
           likesDog: "true",
           firstDogName: "Journy",
         },
-        members: [{ email: "user1@user.com", userId: "userId" }],
       });
 
       expect(propertiesClient.getLastRequest()).toEqual(expectedRequest);

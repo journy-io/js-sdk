@@ -106,13 +106,7 @@ await client.upsertAccount({
     array_of_values: ["value1", "value2"],
     key_with_empty_value: "",
     this_property_will_be_deleted: null,
-  },
-
-  // optional
-  members: [
-    { userId: "userId" }, // userID: Unique identifier for the user in your database
-    { userId: "userId" }
-  ]
+  }
 });
 ```
 
