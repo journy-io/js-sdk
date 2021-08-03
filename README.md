@@ -116,6 +116,29 @@ await client.upsertAccount({
 });
 ```
 
+#### Add users to an account
+
+```ts
+await client.addUsersToAccount(
+  AccountIdentified.byAccountId("accountId"),
+  [UserIdentified.byUserId("userId1"), UserIdentified.byEmail("user2@domain.tld")]
+);
+```
+
+#### Remove users from an account
+
+Please note that journy.io makes a difference between removing and deleting:
+
+- Removing: when removing a user, the user will still be stored but marked as "removed".
+- Deleting: when deleting an user, the user will not be stored anymore.
+
+```ts
+await client.removeUsersFromAccount(
+  AccountIdentified.byAccountId("accountId"),
+  [UserIdentified.byUserId("userId1"), UserIdentified.byEmail("user2@domain.tld")]
+);
+```
+
 #### Link web activity to a user
 
 You can link web activity to a user in your application when you have our snippet installed on your website. The snippet sets a cookie named `__journey`. If the cookie exists, you can link the web activity to the user that is currently logged in:
