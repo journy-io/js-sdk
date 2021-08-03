@@ -21,4 +21,4 @@ dist
 .vscode/
 
 # version file
-version*
+/lib/version.ts
