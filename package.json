@@ -19,7 +19,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "npm run version:output && tsc",
-    "version:output": "echo 'export const Version = { version: `'$npm_package_version'` };' > lib/version.ts",
+    "version:output": "echo 'export const Version = `'$npm_package_version'`;' > lib/version.ts",
     "build-watch": "tsc --watch",
     "test": "jest ${1}",
     "test-watch": "jest ${1} --watch",
