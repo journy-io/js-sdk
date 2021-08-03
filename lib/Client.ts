@@ -265,15 +265,6 @@ export class Client {
         properties: args.properties
           ? this.stringifyProperties(args.properties)
           : undefined,
-        members: args.members
-          ? args.members.map((member) => {
-              const user = new UserIdentified(member.userId, member.email);
-
-              return {
-                identification: this.getUserIdentification(user),
-              };
-            })
-          : undefined,
       })
     );
 
@@ -548,7 +539,6 @@ export interface UpsertAccountArguments {
   accountId?: string;
   domain?: string;
   properties?: Properties;
-  members?: { email?: string; userId?: string }[];
 }
 
 export interface AddUserToAccountArguments {
