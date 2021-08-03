@@ -19,3 +19,6 @@ dist
 # IDE's
 .idea/
 .vscode/
+
+# version file
+version*
