@@ -95,6 +95,11 @@ describe("Client", () => {
     rateLimitHeader,
     defaultResponse
   );
+  const noContentResponse = new HttpResponse(
+    204,
+    rateLimitHeader,
+    defaultResponse
+  );
 
   describe("getApiKeySpecs", () => {
     it("correctly errors when too many requests were made", async () => {
@@ -690,7 +695,7 @@ describe("Client", () => {
     });
   });
 
-  describe("addUserToAccount", () => {
+  describe("addUsersToAccount", () => {
     it("correctly handles errors being thrown", async () => {
       const propertiesClient = new HttpClientThatThrows();
 
@@ -776,7 +781,7 @@ describe("Client", () => {
     });
   });
 
-  describe("removeUserToAccount", () => {
+  describe("removeUsersFromAccount", () => {
     it("correctly handles errors being thrown", async () => {
       const propertiesClient = new HttpClientThatThrows();
 
@@ -794,8 +799,8 @@ describe("Client", () => {
       }
     });
 
-    it("correctly removes users to accounts", async () => {
-      const propertiesClient = new HttpClientFixed(createdResponse);
+    it("correctly removes users from accounts", async () => {
+      const propertiesClient = new HttpClientFixed(noContentResponse);
       const expectedRequest = new HttpRequest(
         new URL("https://api.test.com/accounts/users/remove"),
         "POST",
