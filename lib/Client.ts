@@ -100,7 +100,7 @@ export class Client {
   private getHeaders() {
     return new HttpHeaders({
       "x-api-key": this.config.apiKey,
-      "user-agent": `journyio-js-sdk/${Version}`,
+      "user-agent": `js-sdk/${Version}`,
     });
   }
 

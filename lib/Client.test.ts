@@ -50,12 +50,12 @@ describe("Client", () => {
   const keySecretHeader = new HttpHeaders({
     "x-api-key": "key-secret",
     "content-type": "application/json",
-    "user-agent": "journyio-js-sdk/0.0.0",
+    "user-agent": "js-sdk/0.0.0",
   });
   const nonExistingKeySecretHeader = new HttpHeaders({
     "x-api-key": "non-existing-key-secret",
     "content-type": "application/json",
-    "user-agent": "journyio-js-sdk/0.0.0",
+    "user-agent": "js-sdk/0.0.0",
   });
   const rateLimitHeader = new HttpHeaders({ "X-RateLimit-Remaining": "5000" });
   const tooManyRateLimitHeader = new HttpHeaders({
@@ -259,7 +259,7 @@ describe("Client", () => {
         new HttpHeaders({
           "x-api-key": "key-secret",
           "content-type": "application/json",
-          "user-agent": "journyio-js-sdk/0.0.0",
+          "user-agent": "js-sdk/0.0.0",
         }),
         JSON.stringify({
           identification: {
@@ -294,7 +294,7 @@ describe("Client", () => {
         new HttpHeaders({
           "x-api-key": "key-secret",
           "content-type": "application/json",
-          "user-agent": "journyio-js-sdk/0.0.0",
+          "user-agent": "js-sdk/0.0.0",
         }),
         JSON.stringify({
           identification: {
@@ -336,7 +336,7 @@ describe("Client", () => {
         new HttpHeaders({
           "x-api-key": "key-secret",
           "content-type": "application/json",
-          "user-agent": "journyio-js-sdk/0.0.0",
+          "user-agent": "js-sdk/0.0.0",
         }),
         JSON.stringify({
           identification: {
@@ -369,7 +369,7 @@ describe("Client", () => {
         new HttpHeaders({
           "x-api-key": "key-secret",
           "content-type": "application/json",
-          "user-agent": "journyio-js-sdk/0.0.0",
+          "user-agent": "js-sdk/0.0.0",
         }),
         JSON.stringify({
           identification: {
@@ -402,7 +402,7 @@ describe("Client", () => {
         new HttpHeaders({
           "x-api-key": "key-secret",
           "content-type": "application/json",
-          "user-agent": "journyio-js-sdk/0.0.0",
+          "user-agent": "js-sdk/0.0.0",
         }),
         JSON.stringify({
           identification: {
@@ -460,7 +460,7 @@ describe("Client", () => {
         new HttpHeaders({
           "x-api-key": "key-secret",
           "content-type": "application/json",
-          "user-agent": "journyio-js-sdk/0.0.0",
+          "user-agent": "js-sdk/0.0.0",
         }),
         JSON.stringify({
           identification: { userId: "userId", email: "test@journy.io" },
@@ -501,7 +501,7 @@ describe("Client", () => {
         new HttpHeaders({
           "x-api-key": "key-secret",
           "content-type": "application/json",
-          "user-agent": "journyio-js-sdk/0.0.0",
+          "user-agent": "js-sdk/0.0.0",
         }),
         JSON.stringify({
           identification: {
@@ -572,7 +572,7 @@ describe("Client", () => {
         new HttpHeaders({
           "x-api-key": "key-secret",
           "content-type": "application/json",
-          "user-agent": "journyio-js-sdk/0.0.0",
+          "user-agent": "js-sdk/0.0.0",
         }),
         JSON.stringify({
           identification: { accountId: "accountId", domain: "your-domain.com" },
@@ -611,7 +611,7 @@ describe("Client", () => {
         new HttpHeaders({
           "x-api-key": "key-secret",
           "content-type": "application/json",
-          "user-agent": "journyio-js-sdk/0.0.0",
+          "user-agent": "js-sdk/0.0.0",
         }),
         JSON.stringify({
           identification: { accountId: "accountId", domain: "your-domain.com" },
@@ -654,7 +654,7 @@ describe("Client", () => {
         new HttpHeaders({
           "x-api-key": "key-secret",
           "content-type": "application/json",
-          "user-agent": "journyio-js-sdk/0.0.0",
+          "user-agent": "js-sdk/0.0.0",
         }),
         JSON.stringify({
           identification: { accountId: "accountId", domain: "your-domain.com" },
@@ -729,7 +729,7 @@ describe("Client", () => {
         new HttpHeaders({
           "x-api-key": "key-secret",
           "content-type": "application/json",
-          "user-agent": "journyio-js-sdk/0.0.0",
+          "user-agent": "js-sdk/0.0.0",
         }),
         JSON.stringify({
           deviceId: "deviceId",
@@ -758,7 +758,7 @@ describe("Client", () => {
         new HttpHeaders({
           "x-api-key": "key-secret",
           "content-type": "application/json",
-          "user-agent": "journyio-js-sdk/0.0.0",
+          "user-agent": "js-sdk/0.0.0",
         }),
         JSON.stringify({
           deviceId: "invalid",
