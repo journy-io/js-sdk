@@ -551,13 +551,15 @@ export interface UpsertAccountArguments {
   members?: { email?: string; userId?: string }[];
 }
 
-interface UserToAccountArguments {
+export interface AddUserToAccountArguments {
   account: AccountIdentified;
   users: UserIdentified[];
 }
 
-export type AddUserToAccountArguments = UserToAccountArguments;
-export type RemoveUserToAccountArguments = UserToAccountArguments;
+export interface RemoveUserToAccountArguments {
+  account: AccountIdentified;
+  users: UserIdentified[];
+}
 
 export interface LinkArguments {
   deviceId: string;
