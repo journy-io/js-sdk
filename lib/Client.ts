@@ -297,11 +297,11 @@ export class Client {
     }
   }
 
-  async addUserToAccount(
+  async addUsersToAccount(
     args: AddUserToAccountArguments
   ): Promise<Result<undefined>> {
     const request = new HttpRequest(
-      this.createURL("/accounts/users"),
+      this.createURL("/accounts/users/add"),
       "POST",
       new HttpHeaders({
         ...this.getHeaders().toObject(),
@@ -309,8 +309,7 @@ export class Client {
       }),
       JSON.stringify({
         account: this.getAccountIdentification(args.account),
-        user: this.getUserIdentification(args.user),
-        operation: "add",
+        users: args.users.map((user) => this.getUserIdentification(user)),
       })
     );
 
@@ -334,11 +333,11 @@ export class Client {
     }
   }
 
-  async removeUserToAccount(
+  async removeUsersFromAccount(
     args: RemoveUserToAccountArguments
   ): Promise<Result<undefined>> {
     const request = new HttpRequest(
-      this.createURL("/accounts/users"),
+      this.createURL("/accounts/users/remove"),
       "POST",
       new HttpHeaders({
         ...this.getHeaders().toObject(),
@@ -346,8 +345,7 @@ export class Client {
       }),
       JSON.stringify({
         account: this.getAccountIdentification(args.account),
-        user: this.getUserIdentification(args.user),
-        operation: "remove",
+        users: args.users.map((user) => this.getUserIdentification(user)),
       })
     );
 
@@ -554,12 +552,12 @@ export interface UpsertAccountArguments {
 }
 
 interface UserToAccountArguments {
-  user: UserIdentified;
   account: AccountIdentified;
+  users: UserIdentified[];
 }
 
 export type AddUserToAccountArguments = UserToAccountArguments;
-export type RemoveUserToAccountArguments = AddUserToAccountArguments;
+export type RemoveUserToAccountArguments = UserToAccountArguments;
 
 export interface LinkArguments {
   deviceId: string;
