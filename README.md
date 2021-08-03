@@ -116,7 +116,7 @@ await client.upsertAccount({
 });
 ```
 
-#### Add users to an account
+#### Add user(s) to an account
 
 ```ts
 await client.addUsersToAccount(
@@ -125,7 +125,7 @@ await client.addUsersToAccount(
 );
 ```
 
-#### Remove users from an account
+#### Remove user(s) from an account
 
 Please note that journy.io makes a difference between removing and deleting:
 
