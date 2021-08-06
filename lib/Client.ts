@@ -9,6 +9,7 @@ import { URL } from "url";
 import { AccountIdentified } from "./AccountIdentified";
 import { Event, Metadata } from "./Event";
 import { UserIdentified } from "./UserIdentified";
+import { Version } from "./version";
 
 export interface Config {
   apiKey: string;
@@ -97,7 +98,10 @@ export class Client {
   }
 
   private getHeaders() {
-    return new HttpHeaders({ "x-api-key": this.config.apiKey });
+    return new HttpHeaders({
+      "x-api-key": this.config.apiKey,
+      "user-agent": `js-sdk/${Version}`,
+    });
   }
 
   // noinspection JSMethodCanBeStatic
