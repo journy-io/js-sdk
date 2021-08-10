@@ -731,6 +731,7 @@ describe("Client", () => {
         "POST",
         new HttpHeaders({
           "x-api-key": "key-secret",
+          "user-agent": "js-sdk/0.0.0",
           "content-type": "application/json",
         }),
         JSON.stringify({
@@ -761,6 +762,7 @@ describe("Client", () => {
         "POST",
         new HttpHeaders({
           "x-api-key": "key-secret",
+          "user-agent": "js-sdk/0.0.0",
           "content-type": "application/json",
         }),
         JSON.stringify({
@@ -814,6 +816,7 @@ describe("Client", () => {
         "POST",
         new HttpHeaders({
           "x-api-key": "key-secret",
+          "user-agent": "js-sdk/0.0.0",
           "content-type": "application/json",
         }),
         JSON.stringify({
@@ -841,6 +844,7 @@ describe("Client", () => {
         "POST",
         new HttpHeaders({
           "x-api-key": "key-secret",
+          "user-agent": "js-sdk/0.0.0",
           "content-type": "application/json",
         }),
         JSON.stringify({
