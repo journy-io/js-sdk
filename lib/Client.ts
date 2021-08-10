@@ -269,15 +269,78 @@ export class Client {
         properties: args.properties
           ? this.stringifyProperties(args.properties)
           : undefined,
-        members: args.members
-          ? args.members.map((member) => {
-              const user = new UserIdentified(member.userId, member.email);
+      })
+    );
 
-              return {
-                identification: this.getUserIdentification(user),
-              };
-            })
-          : undefined,
+    try {
+      const response = await this.httpClient.send(request);
+
+      if (response.getStatusCode() < 200 || response.getStatusCode() >= 300) {
+        return this.handleError(response);
+      }
+
+      const remaining = Client.parseCallsRemaining(response);
+
+      return {
+        success: true,
+        requestId: JSON.parse(response.getBody()).meta.requestId,
+        callsRemaining: remaining !== undefined ? parseInt(remaining, 10) : 0,
+        data: undefined,
+      };
+    } catch (error) {
+      return this.handleError(error);
+    }
+  }
+
+  async addUsersToAccount(
+    args: AddUserToAccountArguments
+  ): Promise<Result<undefined>> {
+    const request = new HttpRequest(
+      this.createURL("/accounts/users/add"),
+      "POST",
+      new HttpHeaders({
+        ...this.getHeaders().toObject(),
+        "Content-Type": "application/json",
+      }),
+      JSON.stringify({
+        account: this.getAccountIdentification(args.account),
+        users: args.users.map((user) => this.getUserIdentification(user)),
+      })
+    );
+
+    try {
+      const response = await this.httpClient.send(request);
+
+      if (response.getStatusCode() < 200 || response.getStatusCode() >= 300) {
+        return this.handleError(response);
+      }
+
+      const remaining = Client.parseCallsRemaining(response);
+
+      return {
+        success: true,
+        requestId: JSON.parse(response.getBody()).meta.requestId,
+        callsRemaining: remaining !== undefined ? parseInt(remaining, 10) : 0,
+        data: undefined,
+      };
+    } catch (error) {
+      return this.handleError(error);
+    }
+  }
+
+  async removeUsersFromAccount(
+    args: RemoveUserToAccountArguments
+  ): Promise<Result<undefined>> {
+    const request = new HttpRequest(
+      this.createURL("/accounts/users/remove"),
+      "POST",
+      new HttpHeaders({
+        ...this.getHeaders().toObject(),
+        "Content-Type": "application/json",
+      }),
+      JSON.stringify({
+        account: this.getAccountIdentification(args.account),
+        users: args.users.map((user) => this.getUserIdentification(user)),
       })
     );
 
@@ -480,7 +543,16 @@ export interface UpsertAccountArguments {
   accountId?: string;
   domain?: string;
   properties?: Properties;
-  members?: { email?: string; userId?: string }[];
+}
+
+export interface AddUserToAccountArguments {
+  account: AccountIdentified;
+  users: UserIdentified[];
+}
+
+export interface RemoveUserToAccountArguments {
+  account: AccountIdentified;
+  users: UserIdentified[];
 }
 
 export interface LinkArguments {

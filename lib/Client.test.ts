@@ -97,6 +97,11 @@ describe("Client", () => {
     rateLimitHeader,
     defaultResponse
   );
+  const noContentResponse = new HttpResponse(
+    204,
+    rateLimitHeader,
+    defaultResponse
+  );
 
   describe("getApiKeySpecs", () => {
     it("correctly errors when too many requests were made", async () => {
@@ -621,9 +626,6 @@ describe("Client", () => {
             likesDog: "true",
             firstDogName: "Journy",
           },
-          members: [
-            { identification: { userId: "userId", email: "user1@user.com" } },
-          ],
         })
       );
 
@@ -637,7 +639,6 @@ describe("Client", () => {
           likesDog: "true",
           firstDogName: "Journy",
         },
-        members: [{ email: "user1@user.com", userId: "userId" }],
       });
 
       expect(propertiesClient.getLastRequest()).toEqual(expectedRequest);
@@ -699,6 +700,169 @@ describe("Client", () => {
           domain: "",
         })
       ).rejects.toThrow("Account ID or domain needs to set!");
+    });
+  });
+
+  describe("addUsersToAccount", () => {
+    it("correctly handles errors being thrown", async () => {
+      const propertiesClient = new HttpClientThatThrows();
+
+      const client = new Client(propertiesClient, clientConfig);
+      const response = await client.addUsersToAccount({
+        account: AccountIdentified.byAccountId("aId"),
+        users: [
+          UserIdentified.byUserId("uId"),
+          UserIdentified.byEmail("u@a.tld"),
+        ],
+      });
+
+      expect(response).toBeDefined();
+      expect(response.success).toBeFalsy();
+      expect(response.callsRemaining).toEqual(undefined);
+      if (!response.success) {
+        expect(response.error).toEqual(APIError.UnknownError);
+      }
+    });
+
+    it("correctly adds users to accounts", async () => {
+      const propertiesClient = new HttpClientFixed(createdResponse);
+      const expectedRequest = new HttpRequest(
+        new URL("https://api.test.com/accounts/users/add"),
+        "POST",
+        new HttpHeaders({
+          "x-api-key": "key-secret",
+          "content-type": "application/json",
+        }),
+        JSON.stringify({
+          account: { accountId: "aId" },
+          users: [{ userId: "uId" }, { email: "u@a.tld" }],
+        })
+      );
+
+      const client = new Client(propertiesClient, clientConfig);
+      const response = await client.addUsersToAccount({
+        account: AccountIdentified.byAccountId("aId"),
+        users: [
+          UserIdentified.byUserId("uId"),
+          UserIdentified.byEmail("u@a.tld"),
+        ],
+      });
+
+      expect(propertiesClient.getLastRequest()).toEqual(expectedRequest);
+      expect(response).toBeDefined();
+      expect(response.success).toBeTruthy();
+      expect(response.callsRemaining).toEqual(5000);
+    });
+
+    it("correctly shows when the input parameters are invalid", async () => {
+      const propertiesClient = new HttpClientFixed(badRequestResponse);
+      const expectedRequest = new HttpRequest(
+        new URL("https://api.test.com/accounts/users/add"),
+        "POST",
+        new HttpHeaders({
+          "x-api-key": "key-secret",
+          "content-type": "application/json",
+        }),
+        JSON.stringify({
+          account: { accountId: "aId" },
+          users: [{ userId: "uId" }, { email: "u@a.tld" }],
+        })
+      );
+
+      const client = new Client(propertiesClient, clientConfig);
+      const response = await client.addUsersToAccount({
+        account: AccountIdentified.byAccountId("aId"),
+        users: [
+          UserIdentified.byUserId("uId"),
+          UserIdentified.byEmail("u@a.tld"),
+        ],
+      });
+
+      expect(propertiesClient.getLastRequest()).toEqual(expectedRequest);
+      expect(response).toBeDefined();
+      expect(response.success).toBeFalsy();
+      expect(response.callsRemaining).toEqual(5000);
+      if (!response.success) {
+        expect(response.error).toBeDefined();
+        expect(response.error).toEqual(APIError.BadArgumentsError);
+      }
+    });
+  });
+
+  describe("removeUsersFromAccount", () => {
+    it("correctly handles errors being thrown", async () => {
+      const propertiesClient = new HttpClientThatThrows();
+
+      const client = new Client(propertiesClient, clientConfig);
+      const response = await client.removeUsersFromAccount({
+        account: AccountIdentified.byAccountId("aId"),
+        users: [UserIdentified.byUserId("uId")],
+      });
+
+      expect(response).toBeDefined();
+      expect(response.success).toBeFalsy();
+      expect(response.callsRemaining).toEqual(undefined);
+      if (!response.success) {
+        expect(response.error).toEqual(APIError.UnknownError);
+      }
+    });
+
+    it("correctly removes users from accounts", async () => {
+      const propertiesClient = new HttpClientFixed(noContentResponse);
+      const expectedRequest = new HttpRequest(
+        new URL("https://api.test.com/accounts/users/remove"),
+        "POST",
+        new HttpHeaders({
+          "x-api-key": "key-secret",
+          "content-type": "application/json",
+        }),
+        JSON.stringify({
+          account: { accountId: "aId" },
+          users: [{ userId: "uId" }],
+        })
+      );
+
+      const client = new Client(propertiesClient, clientConfig);
+      const response = await client.removeUsersFromAccount({
+        account: AccountIdentified.byAccountId("aId"),
+        users: [UserIdentified.byUserId("uId")],
+      });
+
+      expect(propertiesClient.getLastRequest()).toEqual(expectedRequest);
+      expect(response).toBeDefined();
+      expect(response.success).toBeTruthy();
+      expect(response.callsRemaining).toEqual(5000);
+    });
+
+    it("correctly shows when the input parameters are invalid", async () => {
+      const propertiesClient = new HttpClientFixed(badRequestResponse);
+      const expectedRequest = new HttpRequest(
+        new URL("https://api.test.com/accounts/users/remove"),
+        "POST",
+        new HttpHeaders({
+          "x-api-key": "key-secret",
+          "content-type": "application/json",
+        }),
+        JSON.stringify({
+          account: { accountId: "aId" },
+          users: [{ userId: "uId" }],
+        })
+      );
+
+      const client = new Client(propertiesClient, clientConfig);
+      const response = await client.removeUsersFromAccount({
+        account: AccountIdentified.byAccountId("aId"),
+        users: [UserIdentified.byUserId("uId")],
+      });
+
+      expect(propertiesClient.getLastRequest()).toEqual(expectedRequest);
+      expect(response).toBeDefined();
+      expect(response.success).toBeFalsy();
+      expect(response.callsRemaining).toEqual(5000);
+      if (!response.success) {
+        expect(response.error).toBeDefined();
+        expect(response.error).toEqual(APIError.BadArgumentsError);
+      }
     });
   });
 

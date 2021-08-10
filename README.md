@@ -106,14 +106,28 @@ await client.upsertAccount({
     array_of_values: ["value1", "value2"],
     key_with_empty_value: "",
     this_property_will_be_deleted: null,
-  },
-
-  // optional
-  members: [
-    { userId: "userId" }, // userID: Unique identifier for the user in your database
-    { userId: "userId" }
-  ]
+  }
 });
+```
+
+#### Add user(s) to an account
+
+```ts
+await client.addUsersToAccount(
+  AccountIdentified.byAccountId("accountId"),
+  [UserIdentified.byUserId("userId1"), UserIdentified.byEmail("user2@domain.tld")]
+);
+```
+
+#### Remove user(s) from an account
+
+When removing a user, the user will still be stored in journy.io, but marked as "removed".
+
+```ts
+await client.removeUsersFromAccount(
+  AccountIdentified.byAccountId("accountId"),
+  [UserIdentified.byUserId("userId1"), UserIdentified.byEmail("user2@domain.tld")]
+);
 ```
 
 #### Link web activity to a user
