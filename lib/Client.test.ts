@@ -736,7 +736,10 @@ describe("Client", () => {
         }),
         JSON.stringify({
           account: { accountId: "aId" },
-          users: [{ userId: "uId" }, { email: "u@a.tld" }],
+          users: [
+            { identification: { userId: "uId" } },
+            { identification: { email: "u@a.tld" } },
+          ],
         })
       );
 
@@ -767,7 +770,10 @@ describe("Client", () => {
         }),
         JSON.stringify({
           account: { accountId: "aId" },
-          users: [{ userId: "uId" }, { email: "u@a.tld" }],
+          users: [
+            { identification: { userId: "uId" } },
+            { identification: { email: "u@a.tld" } },
+          ],
         })
       );
 
@@ -821,7 +827,7 @@ describe("Client", () => {
         }),
         JSON.stringify({
           account: { accountId: "aId" },
-          users: [{ userId: "uId" }],
+          users: [{ identification: { userId: "uId" } }],
         })
       );
 
@@ -849,7 +855,7 @@ describe("Client", () => {
         }),
         JSON.stringify({
           account: { accountId: "aId" },
-          users: [{ userId: "uId" }],
+          users: [{ identification: { userId: "uId" } }],
         })
       );
 
