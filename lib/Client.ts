@@ -304,7 +304,9 @@ export class Client {
       }),
       JSON.stringify({
         account: this.getAccountIdentification(args.account),
-        users: args.users.map((user) => this.getUserIdentification(user)),
+        users: args.users.map((user) => {
+          return { identification: this.getUserIdentification(user) };
+        }),
       })
     );
 
@@ -340,7 +342,9 @@ export class Client {
       }),
       JSON.stringify({
         account: this.getAccountIdentification(args.account),
-        users: args.users.map((user) => this.getUserIdentification(user)),
+        users: args.users.map((user) => {
+          return { identification: this.getUserIdentification(user) };
+        }),
       })
     );
 
