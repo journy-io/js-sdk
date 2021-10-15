@@ -86,6 +86,16 @@ await client.upsertUser({
 });
 ```
 
+#### Delete user
+
+```ts
+await client.deleteUser({
+  // Must provide either an email or userId or both
+  userId: "userId", // Unique identifier for the user in your database
+  email: "john@doe.tld",
+});
+```
+
 #### Create or update account
 
 Note: `name`, `mrr`, `plan` and `registered_at` are default properties
@@ -107,6 +117,16 @@ await client.upsertAccount({
     key_with_empty_value: "",
     this_property_will_be_deleted: null,
   }
+});
+```
+
+#### Delete account
+
+```ts
+await client.deleteAccount({
+  // Must provide either a domain or accountId or both
+  accountId: "accountId", // Unique identifier for the account in your database
+  domain: "test.com",
 });
 ```
 
