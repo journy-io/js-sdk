@@ -545,6 +545,47 @@ describe("Client", () => {
     });
   });
 
+  describe("deleteUser", () => {
+    it("correctly deletes user", async () => {
+      const fixedClient = new HttpClientFixed(createdResponse);
+      const expectedRequest = new HttpRequest(
+        new URL("https://api.test.com/users"),
+        "DELETE",
+        new HttpHeaders({
+          "x-api-key": "key-secret",
+          "content-type": "application/json",
+          "user-agent": "js-sdk/0.0.0",
+        }),
+        JSON.stringify({
+          identification: { userId: "userId", email: "test@journy.io" },
+        })
+      );
+
+      const client = new Client(fixedClient, clientConfig);
+      const response = await client.deleteUser({
+        email: "test@journy.io",
+        userId: "userId",
+      });
+
+      expect(fixedClient.getLastRequest()).toEqual(expectedRequest);
+      expect(response).toBeDefined();
+      expect(response.success).toBeTruthy();
+      expect(response.callsRemaining).toEqual(5000);
+    });
+
+    it("correctly throws when the input parameters are empty", async () => {
+      const fixedClient = new HttpClientFixed(badRequestResponse);
+
+      const client = new Client(fixedClient, clientConfig);
+      await expect(
+        client.deleteUser({
+          email: "",
+          userId: "",
+        })
+      ).rejects.toThrow("User ID or email needs to set!");
+    });
+  });
+
   describe("upsertAccount", () => {
     it("correctly handles errors being thrown", async () => {
       const propertiesClient = new HttpClientThatThrows();
@@ -698,6 +739,47 @@ describe("Client", () => {
         client.upsertAccount({
           accountId: "",
           domain: "",
+        })
+      ).rejects.toThrow("Account ID or domain needs to set!");
+    });
+  });
+
+  describe("deleteAccount", () => {
+    it("correctly deletes account", async () => {
+      const fixedClient = new HttpClientFixed(createdResponse);
+      const expectedRequest = new HttpRequest(
+        new URL("https://api.test.com/accounts"),
+        "DELETE",
+        new HttpHeaders({
+          "x-api-key": "key-secret",
+          "content-type": "application/json",
+          "user-agent": "js-sdk/0.0.0",
+        }),
+        JSON.stringify({
+          identification: { accountId: "accountId", domain: "journy.com" },
+        })
+      );
+
+      const client = new Client(fixedClient, clientConfig);
+      const response = await client.deleteAccount({
+        domain: "journy.com",
+        accountId: "accountId",
+      });
+
+      expect(fixedClient.getLastRequest()).toEqual(expectedRequest);
+      expect(response).toBeDefined();
+      expect(response.success).toBeTruthy();
+      expect(response.callsRemaining).toEqual(5000);
+    });
+
+    it("correctly throws when the input parameters are empty", async () => {
+      const fixedClient = new HttpClientFixed(badRequestResponse);
+
+      const client = new Client(fixedClient, clientConfig);
+      await expect(
+        client.deleteAccount({
+          domain: "",
+          accountId: "",
         })
       ).rejects.toThrow("Account ID or domain needs to set!");
     });
