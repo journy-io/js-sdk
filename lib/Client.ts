@@ -239,6 +239,40 @@ export class Client {
     }
   }
 
+  async deleteUser(args: DeleteUserArguments): Promise<Result<undefined>> {
+    const identification = new UserIdentified(args.userId, args.email);
+    const request = new HttpRequest(
+      this.createURL("/users"),
+      "DELETE",
+      new HttpHeaders({
+        ...this.getHeaders().toObject(),
+        "Content-Type": "application/json",
+      }),
+      JSON.stringify({
+        identification: this.getUserIdentification(identification),
+      })
+    );
+
+    try {
+      const response = await this.httpClient.send(request);
+
+      if (response.getStatusCode() < 200 || response.getStatusCode() >= 300) {
+        return this.handleError(response);
+      }
+
+      const remaining = Client.parseCallsRemaining(response);
+
+      return {
+        success: true,
+        requestId: JSON.parse(response.getBody()).meta.requestId,
+        callsRemaining: remaining !== undefined ? parseInt(remaining, 10) : 0,
+        data: undefined,
+      };
+    } catch (error) {
+      return this.handleError(error);
+    }
+  }
+
   private getUserIdentification(user: UserIdentified) {
     return {
       userId: user.getUserId(),
@@ -269,6 +303,42 @@ export class Client {
         properties: args.properties
           ? this.stringifyProperties(args.properties)
           : undefined,
+      })
+    );
+
+    try {
+      const response = await this.httpClient.send(request);
+
+      if (response.getStatusCode() < 200 || response.getStatusCode() >= 300) {
+        return this.handleError(response);
+      }
+
+      const remaining = Client.parseCallsRemaining(response);
+
+      return {
+        success: true,
+        requestId: JSON.parse(response.getBody()).meta.requestId,
+        callsRemaining: remaining !== undefined ? parseInt(remaining, 10) : 0,
+        data: undefined,
+      };
+    } catch (error) {
+      return this.handleError(error);
+    }
+  }
+
+  async deleteAccount(
+    args: DeleteAccountArguments
+  ): Promise<Result<undefined>> {
+    const identification = new AccountIdentified(args.accountId, args.domain);
+    const request = new HttpRequest(
+      this.createURL("/accounts"),
+      "DELETE",
+      new HttpHeaders({
+        ...this.getHeaders().toObject(),
+        "Content-Type": "application/json",
+      }),
+      JSON.stringify({
+        identification: this.getAccountIdentification(identification),
       })
     );
 
@@ -543,10 +613,20 @@ export interface UpsertUserArguments {
   properties?: Properties;
 }
 
+export interface DeleteUserArguments {
+  email?: string;
+  userId?: string;
+}
+
 export interface UpsertAccountArguments {
   accountId?: string;
   domain?: string;
   properties?: Properties;
+}
+
+export interface DeleteAccountArguments {
+  accountId?: string;
+  domain?: string;
 }
 
 export interface AddUserToAccountArguments {
