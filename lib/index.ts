@@ -15,6 +15,8 @@ export {
   UpsertUserArguments,
   AddUserToAccountArguments,
   RemoveUserToAccountArguments,
+  DeleteUserArguments,
+  DeleteAccountArguments,
 } from "./Client";
 export { Event, Metadata } from "./Event";
 export { UserIdentified } from "./UserIdentified";
