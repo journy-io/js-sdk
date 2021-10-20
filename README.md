@@ -63,7 +63,11 @@ if (result.success) {
 
 #### Create or update user
 
-Note: `full_name`, `first_name`, `last_name`, `phone` and `registered_at` are default properties
+💡 A user ID should be a robust, static, unique identifier that you recognize a user by in your own systems. Because these IDs are consistent across a customer’s lifetime, you should include a user ID in identify calls as often as you can. Ideally, the user ID should be a database ID.
+
+💡 journy.io does not recommend using simple email addresses or usernames as user ID, as these can change over time. journy.io recommends that you use static IDs instead, so the IDs never change. When you use a static ID, you can still recognize the user in your analytics tools, even if the user changes their email address.
+
+💡 The properties `full_name`, `first_name`, `last_name`, `phone` and `registered_at` will be used for creating contacts in destinations like Intercom, HubSpot, Salesforce, ...
 
 ```ts
 await client.upsertUser({
@@ -98,7 +102,9 @@ await client.deleteUser({
 
 #### Create or update account
 
-Note: `name`, `mrr`, `plan` and `registered_at` are default properties
+💡 An account ID should be a robust, static, unique identifier that you recognize an account by in your own systems. Ideally, the account ID should be a database ID.
+
+💡 The properties `name`, `mrr`, `plan` and `registered_at` will be used to create companies in destinations like Intercom, HubSpot, Salesforce, ...
 
 ```ts
 await client.upsertAccount({
