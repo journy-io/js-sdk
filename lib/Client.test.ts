@@ -259,7 +259,7 @@ describe("Client", () => {
     it("correctly adds an event", async () => {
       const eventClient = new HttpClientFixed(createdResponse);
       const expectedRequest = new HttpRequest(
-        new URL("https://api.test.com/events"),
+        new URL("https://api.test.com/track"),
         "POST",
         new HttpHeaders({
           "x-api-key": "key-secret",
@@ -294,7 +294,7 @@ describe("Client", () => {
       const eventClient = new HttpClientFixed(createdResponse);
       const date = new Date();
       const expectedRequest = new HttpRequest(
-        new URL("https://api.test.com/events"),
+        new URL("https://api.test.com/track"),
         "POST",
         new HttpHeaders({
           "x-api-key": "key-secret",
@@ -336,7 +336,7 @@ describe("Client", () => {
     it("correctly handles dates", async () => {
       const eventClient = new HttpClientFixed(createdResponse);
       const expectedRequest = new HttpRequest(
-        new URL("https://api.test.com/events"),
+        new URL("https://api.test.com/track"),
         "POST",
         new HttpHeaders({
           "x-api-key": "key-secret",
@@ -369,7 +369,7 @@ describe("Client", () => {
     it("correctly states when the input is invalid", async () => {
       const eventClient = new HttpClientFixed(badRequestResponse);
       const expectedRequest = new HttpRequest(
-        new URL("https://api.test.com/events"),
+        new URL("https://api.test.com/track"),
         "POST",
         new HttpHeaders({
           "x-api-key": "key-secret",
@@ -402,7 +402,7 @@ describe("Client", () => {
     it("correctly states when the user is unauthorized", async () => {
       const eventClient = new HttpClientFixed(unAuthorizedResponse);
       const expectedRequest = new HttpRequest(
-        new URL("https://api.test.com/events"),
+        new URL("https://api.test.com/track"),
         "POST",
         new HttpHeaders({
           "x-api-key": "key-secret",

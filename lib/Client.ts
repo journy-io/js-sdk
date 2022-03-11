@@ -165,7 +165,7 @@ export class Client {
     }
 
     const request = new HttpRequest(
-      this.createURL("/events"),
+      this.createURL("/track"),
       "POST",
       new HttpHeaders({
         ...this.getHeaders().toObject(),
