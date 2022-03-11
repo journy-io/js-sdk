@@ -309,8 +309,8 @@ describe("Client", () => {
           name: "event",
           triggeredAt: date.toISOString(),
           metadata: {
-            number: "1",
-            boolean: "true",
+            number: 1,
+            boolean: true,
             string: "string",
           },
         })
@@ -470,9 +470,9 @@ describe("Client", () => {
         JSON.stringify({
           identification: { userId: "userId", email: "test@journy.io" },
           properties: {
-            hasDogs: "2",
+            hasDogs: 2,
             boughtDog: "2020-08-27T12:08:21.000Z",
-            likesDog: "true",
+            likesDog: true,
             listValues: ["value1", "value2"],
             firstDogName: "Journy",
           },
@@ -623,10 +623,11 @@ describe("Client", () => {
         JSON.stringify({
           identification: { accountId: "accountId", domain: "your-domain.com" },
           properties: {
-            hasDogs: "2",
+            hasDogs: 2,
             boughtDog: "2020-08-27T12:08:21.000Z",
-            likesDog: "true",
+            likesDog: true,
             firstDogName: "Journy",
+            list: ["a", "b", "c"],
           },
         })
       );
@@ -636,10 +637,11 @@ describe("Client", () => {
         accountId: "accountId",
         domain: "your-domain.com",
         properties: {
-          hasDogs: "2",
+          hasDogs: 2,
           boughtDog: new Date("2020-08-27T12:08:21+00:00"),
-          likesDog: "true",
+          likesDog: true,
           firstDogName: "Journy",
+          list: ["a", "b", "c"],
         },
       });
 
@@ -701,9 +703,9 @@ describe("Client", () => {
         JSON.stringify({
           identification: { accountId: "accountId", domain: "your-domain.com" },
           properties: {
-            hasDogs: "2",
+            hasDogs: 2,
             boughtDog: "2020-08-27T12:08:21.000Z",
-            likesDog: "true",
+            likesDog: true,
             firstDogName: "Journy",
           },
         })

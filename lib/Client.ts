@@ -106,16 +106,19 @@ export class Client {
 
   // noinspection JSMethodCanBeStatic
   private stringifyProperties(properties: Properties) {
-    const formatted: { [name: string]: string | string[] } = {};
+    const formatted: {
+      [name: string]: string | boolean | number | null | string[];
+    } = {};
     for (const name of Object.keys(properties)) {
       const value = properties[name];
 
       if (
+        value === null ||
         typeof value === "string" ||
         typeof value === "boolean" ||
         typeof value === "number"
       ) {
-        formatted[name] = String(value);
+        formatted[name] = value;
       }
 
       if (value instanceof Date) {
@@ -132,7 +135,7 @@ export class Client {
 
   // noinspection JSMethodCanBeStatic
   private stringifyMetadata(metadata: Metadata) {
-    const formatted: { [key: string]: string } = {};
+    const formatted: { [key: string]: string | boolean | number } = {};
     for (const key of Object.keys(metadata)) {
       const value = metadata[key];
 
@@ -141,7 +144,7 @@ export class Client {
         typeof value === "boolean" ||
         typeof value === "number"
       ) {
-        formatted[key] = String(value);
+        formatted[key] = value;
       }
 
       if (value instanceof Date) {
@@ -273,6 +276,7 @@ export class Client {
     }
   }
 
+  // noinspection JSMethodCanBeStatic
   private getUserIdentification(user: UserIdentified) {
     return {
       userId: user.getUserId(),
@@ -280,6 +284,7 @@ export class Client {
     };
   }
 
+  // noinspection JSMethodCanBeStatic
   private getAccountIdentification(account: AccountIdentified) {
     return {
       accountId: account.getAccountId(),
