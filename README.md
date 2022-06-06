@@ -139,10 +139,10 @@ await client.deleteAccount({
 #### Add user(s) to an account
 
 ```ts
-await client.addUsersToAccount(
-  AccountIdentified.byAccountId("accountId"),
-  [UserIdentified.byUserId("userId1"), UserIdentified.byEmail("user2@domain.tld")]
-);
+await client.addUsersToAccount({
+  account: AccountIdentified.byAccountId("accountId"),
+  users: [UserIdentified.byUserId("userId1"), UserIdentified.byEmail("user2@domain.tld")]
+});
 ```
 
 #### Remove user(s) from an account
@@ -150,10 +150,10 @@ await client.addUsersToAccount(
 When removing a user, the user will still be stored in journy.io, but marked as "removed".
 
 ```ts
-await client.removeUsersFromAccount(
-  AccountIdentified.byAccountId("accountId"),
-  [UserIdentified.byUserId("userId1"), UserIdentified.byEmail("user2@domain.tld")]
-);
+await client.removeUsersFromAccount({
+  account: AccountIdentified.byAccountId("accountId"),
+  users: [UserIdentified.byUserId("userId1"), UserIdentified.byEmail("user2@domain.tld")]
+});
 ```
 
 #### Link web activity to a user
