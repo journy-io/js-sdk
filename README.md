@@ -1,6 +1,6 @@
 [![journy.io](banner.png)](https://journy.io/?utm_source=github&utm_content=readme-js-sdk)
 
-# journy.io Node.js SDK
+# journy.io Node.js SDK [Legacy]
 
 [![npm](https://img.shields.io/npm/v/@journyio/sdk?color=%234d84f5&style=flat-square)](https://www.npmjs.com/package/@journyio/sdk)
 [![npm downloads](https://img.shields.io/npm/dm/@journyio/sdk?style=flat-square)](https://www.npmjs.com/package/@journyio/sdk)
